@@ -1,3 +1,5 @@
+import { IAppOption } from "../../types/appOptions";
+
 interface Marker {
   iconPath: string;
   id: number;
@@ -42,10 +44,8 @@ Page({
     markers: [] as Marker[],
   },
   /* 生命周期 */
-  onLoad() {
-    const {
-      globalData: { userInfo },
-    } = getApp<IAppOption>();
+  async onLoad() {
+    const userInfo = await getApp<IAppOption>().globalData.userInfo;
     this.setData({
       avatarURL: userInfo?.avatarUrl,
     });
