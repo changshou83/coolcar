@@ -32,11 +32,11 @@ page {
   align-items: center;
   justify-content: center;
 
-  position: absolute;
   width: 600rpx;
   height: 65rpx;
-  bottom: 7%;
   margin-left: 75rpx;
+  position: absolute;
+  bottom: 7%;
 
   opacity: .8;
 }
