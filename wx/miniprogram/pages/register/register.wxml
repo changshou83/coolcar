@@ -1,0 +1,83 @@
+<view class="container padding-top-xl">
+  <!-- 未上传驾驶证 -->
+  <view
+    class="license-placeholder"
+    wx:if="{{!licenseImgUrl}}"
+    bindtap="uploadLicense"
+  >
+    <image class="license-placeholder-img" src="/resources/lic.png" />
+    <view class="cuIcon-camerafill"></view>
+    <view class="instruction">请上传驾驶证照片</view>
+  </view>
+  <!-- 已上传驾驶证 -->
+  <block wx:else>
+    <!-- 图片 -->
+    <view class="license-placeholder">
+      <image class="stretch" src="{{licenseImgUrl}}" />
+      <image class="check" wx:if="{{licenseState === 'VERIFIED'}}" src="/resources/check.png" />
+    </view>
+    <!-- 表单 -->
+    <view class="license-form margin-top-xl">
+      <view class="cu-form-group">
+        <view class="title">驾驶证号：</view>
+        <input
+          placeholder="请输入驾驶证号"
+          model:value="{{form.licenseId}}"
+          disabled="{{licenseState !== 'UNSUBMITTED'}}"
+        />
+      </view>
+      <view class="cu-form-group">
+        <view class="title">姓名：</view>
+        <input
+          placeholder="请输入姓名"
+          model:value="{{form.name}}"
+          disabled="{{licenseState === 'UNSUBMITTED'}}"
+        />
+      </view>
+      <view class="cu-form-group">
+        <view class="title">性别：</view>
+        <picker
+          value="{{form.gender}}"
+          range="{{genders}}"
+          disabled="{{licenseState !== 'UNSUBMITTED'}}"
+          bindchange="changeGender"
+        >
+          <view class="picker">{{genders[form.gender]}}</view>
+        </picker>
+      </view>
+      <view class="cu-form-group">
+        <view class="title">出生日期：</view>
+        <picker
+          mode="date"
+          value="{{form.birthDate}}"
+          disabled="{{licenseState !== 'UNSUBMITTED'}}"
+          bindchange="changeBirthDate"
+        >
+          <view class="picker">{{form.birthDate || ''}}</view>
+        </picker>
+      </view>
+    </view>
+    <!-- 底部按钮 -->
+    <button
+      class="cu-btn bg-red lg margin-top-xl"
+      wx:if="{{licenseState === 'UNSUBMITTED'}}"
+      bindtap="submit"
+    >
+      递交审查
+    </button>
+    <button
+      disabled
+      class="cu-btn block line-blue margin-top-xl lg"
+      wx:if="{{licenseState === 'PENDING'}}"
+    >
+      审查中
+    </button>
+    <button
+      class="cu-btn bg-red lg margin-top-xl"
+      wx:if="{{licenseState === 'VERIFIED'}}"
+      bindtap="resubmit"
+    >
+      重新审查
+    </button>
+  </block>
+</view>
