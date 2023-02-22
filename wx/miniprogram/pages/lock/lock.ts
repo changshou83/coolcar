@@ -1,7 +1,9 @@
-import { IAppOption } from "../../types/appOptions";
-import { routing } from "../../utils/util";
+import { routing } from "../../utils";
 
 const enableShareKey = "enable_share_location";
+const avatarURLKey = "avarat_URL";
+const defaultAvatarUrl =
+  "https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0";
 
 Page({
   /* 页面状态 */
@@ -9,7 +11,7 @@ Page({
   carRefresher: 0,
   /* 页面数据 */
   data: {
-    avatarURL: "",
+    avatarUrl: defaultAvatarUrl,
     enableShareLoc: false,
   },
   /* 生命周期函数 */
@@ -17,9 +19,8 @@ Page({
     const { car_id } = opts as routing.LockOpts;
     this.carID = car_id;
 
-    const userInfo = await getApp<IAppOption>().globalData.userInfo;
     this.setData({
-      avatarURL: userInfo.avatarUrl,
+      avatarUrl: wx.getStorageSync(avatarURLKey) || defaultAvatarUrl,
       enableShareLoc: wx.getStorageSync(enableShareKey) || false,
     });
   },
@@ -28,19 +29,10 @@ Page({
     wx.hideLoading();
   },
   /* 页面方法 */
-  getUserInfo(evt: any) {
-    const userInfo = evt.detail.userInfo as WechatMiniprogram.UserInfo;
-    if (userInfo) {
-      getApp<IAppOption>().resolveUserInfo(userInfo);
-      wx.setStorageSync(enableShareKey, true);
-      this.setData({
-        enableShareLoc: true,
-      });
-    }
-  },
   shareLocation(evt: any) {
-    this.data.enableShareLoc = evt.detail.value;
-    wx.setStorageSync(enableShareKey, this.data.enableShareLoc);
+    const { value } = evt.detail;
+    this.data.enableShareLoc = value; // 不用setData进行重新渲染
+    wx.setStorageSync(enableShareKey, value);
   },
   unlock() {
     wx.getLocation({
@@ -58,6 +50,13 @@ Page({
         });
       },
     });
+  },
+  chooseAvatar(evt: any) {
+    const { avatarUrl } = evt.detail;
+    if (avatarUrl) {
+      this.setData({ avatarUrl });
+      wx.setStorageSync(avatarURLKey, avatarUrl);
+    }
   },
   /* 辅助方法 */
   clearCarRefresher() {

@@ -9,28 +9,28 @@
   </view>
   <!-- 用户头像 -->
   <view class="avatar-container">
-    <!-- 获取按钮 -->
-    <button
-      class="cu-avatar round lg bg-grey margin-xs"
-      open-type="getUserInfo"
-      wx:if="{{!avatarURL}}"
-      bindgetuserinfo="getUserInfo"
-    >
-      <text class="cuIcon-people" />
-    </button>
     <!-- 头像展示 -->
-    <view class="switch-container" wx:if="{{avatarURL}}" >
-      <image
-        class="cu-avatar round lg bg-grey margin-sx"
-        src="{{avatarURL}}"
-      />
-      <switch
-        checked="{{enableShareLoc}}"
-        bindchange="shareLocation"
-      />
+    <view class="switch-container">
+      <view class="group">
+        <button
+          class="avatar-img-container"
+          open-type="chooseAvatar"
+          bind:chooseavatar="chooseAvatar"
+        >
+          <image
+            class="cu-avatar round lg bg-grey margin-sx"
+            src="{{avatarUrl}}"
+          />
+        </button>
+      </view>
+      <view class="group">
+        <text class="title">实时展示头像：</text>
+        <switch
+          checked="{{enableShareLoc}}"
+          bindchange="shareLocation"
+        />
+      </view>
     </view>
-    <!-- 文字说明 -->
-    <view class="margin-top">实时展示我的头像</view>
   </view>
   <!-- 开锁按钮 -->
   <button

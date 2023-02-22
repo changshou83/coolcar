@@ -24,8 +24,28 @@ page {
 
 .switch-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: space-between;
+}
 
-  width: 8em;
+.switch-container .group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  width: 100%;
+  margin-top: 20rpx;
+}
+
+.switch-container .group .title {
+  width: calc(6em + 30rpx);
+  font-weight: bold;
+}
+
+.switch-container .group .avatar-img-container {
+  padding: 0;
+  width: auto;
+  border: 1px transparent;
+  border-radius: 50%;
 }
