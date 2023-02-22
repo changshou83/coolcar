@@ -31,7 +31,7 @@
         <input
           placeholder="请输入姓名"
           model:value="{{form.name}}"
-          disabled="{{licenseState === 'UNSUBMITTED'}}"
+          disabled="{{licenseState !== 'UNSUBMITTED'}}"
         />
       </view>
       <view class="cu-form-group">
