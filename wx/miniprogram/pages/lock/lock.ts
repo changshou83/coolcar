@@ -38,10 +38,27 @@ Page({
     wx.getLocation({
       type: "gcj02",
       success: async () => {
-        if (!this.carID) {
-          console.error("no car id specified");
-          return;
-        }
+        // if (!this.carID) {
+        //   console.error("no car id specified");
+        //   return;
+        // }
+        wx.showToast({
+          title: "开锁中...",
+          mask: true,
+        });
+        this.carRefresher = setInterval(async () => {
+          const state = "UNLOCKED";
+          const trip_id = "1";
+          if (state === "UNLOCKED") {
+            this.clearCarRefresher();
+            wx.redirectTo({
+              url: routing.driving({ trip_id }),
+              complete() {
+                wx.hideLoading();
+              },
+            });
+          }
+        }, 2000);
       },
       fail() {
         wx.showToast({

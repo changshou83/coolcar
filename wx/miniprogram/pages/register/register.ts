@@ -35,7 +35,11 @@ Page({
     form.birthDate = evt.detail.value;
     this.setData({ form });
   },
-  submit() {},
+  submit() {
+    wx.redirectTo({
+      url: "/pages/lock/lock",
+    });
+  },
   resubmit() {},
   uploadLicense() {
     wx.chooseMedia({

@@ -1,0 +1,32 @@
+<view class="container">
+  <!-- 地图展示 -->
+  <map
+    id="map"
+    show-location
+    latitude="{{location.latitude}}"
+    longitude="{{location.longitude}}"
+    scale="{{scale}}"
+    markers="{{markers}}"
+  />
+  <!-- 控制面板 -->
+  <view class="panel padding-bottom-lg">
+    <!-- 行程信息展示 -->
+    <view class="payment margin-top">
+      <view class="time">
+        <text class="cuIcon-timefill"></text>
+        <text class="time-driven">{{elapsed}}</text>
+      </view>
+      <view class="fee margin-top-sm">
+        <text>费用：{{fee}}元</text>
+      </view>
+    </view>
+    <!-- 结束按钮 -->
+    <button
+      style="width:100%" 
+      class="cu-btn bg-red margin-tb-sm lg"
+      bindtap="endTrip"
+    >
+      结束行程
+    </button>
+  </view>
+</view>
