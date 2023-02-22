@@ -1,7 +1,6 @@
-import { routing } from "../../utils";
+import { getUserInfo, routing, setUserInfo } from "../../utils/index";
 
 const enableShareKey = "enable_share_location";
-const avatarURLKey = "avarat_URL";
 const defaultAvatarUrl =
   "https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0";
 
@@ -19,8 +18,9 @@ Page({
     const { car_id } = opts as routing.LockOpts;
     this.carID = car_id;
 
+    const { avatarURL } = getUserInfo();
     this.setData({
-      avatarUrl: wx.getStorageSync(avatarURLKey) || defaultAvatarUrl,
+      avatarUrl: avatarURL || defaultAvatarUrl,
       enableShareLoc: wx.getStorageSync(enableShareKey) || false,
     });
   },
@@ -37,7 +37,7 @@ Page({
   unlock() {
     wx.getLocation({
       type: "gcj02",
-      success: async (location) => {
+      success: async () => {
         if (!this.carID) {
           console.error("no car id specified");
           return;
@@ -53,9 +53,10 @@ Page({
   },
   chooseAvatar(evt: any) {
     const { avatarUrl } = evt.detail;
+    const userInfo = getUserInfo();
     if (avatarUrl) {
       this.setData({ avatarUrl });
-      wx.setStorageSync(avatarURLKey, avatarUrl);
+      setUserInfo({ ...userInfo, avatarURL: avatarUrl });
     }
   },
   /* 辅助方法 */

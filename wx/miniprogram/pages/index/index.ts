@@ -1,4 +1,4 @@
-import { IAppOption } from "../../types/appOptions";
+import { getUserInfo } from "../../utils/index";
 
 interface Marker {
   iconPath: string;
@@ -9,7 +9,7 @@ interface Marker {
   height: number;
 }
 
-const defaultAvatar = "/resources/car.png";
+// const defaultCarImg = "/resources/car.png";
 const initialLat = 42.05297;
 const initialLng = 123.52658;
 
@@ -31,7 +31,7 @@ Page({
       showLocation: true,
       showScale: true,
       subKey: "",
-      layerStyle: -1,
+      layerStyle: 1,
       enableZoom: true,
       enableScroll: true,
       enableRotate: false,
@@ -45,9 +45,9 @@ Page({
   },
   /* 生命周期 */
   async onLoad() {
-    const userInfo = await getApp<IAppOption>().globalData.userInfo;
+    const { avatarURL } = getUserInfo();
     this.setData({
-      avatarURL: userInfo?.avatarUrl,
+      avatarURL,
     });
   },
   onShow() {
@@ -92,14 +92,14 @@ Page({
   },
   // 扫码
   async scanCode() {
-    wx.scanCode({
-      success: () => {
-        wx.navigateTo({
-          url: "/pages/register/register",
-        });
-      },
-      fail: console.error,
+    // wx.scanCode({
+    //   success: () => {
+    wx.navigateTo({
+      url: "/pages/register/register",
     });
+    //   },
+    //   fail: console.error,
+    // });
   },
   /* 辅助方法 */
   setupCarPosUpdater() {
@@ -121,7 +121,7 @@ Page({
     //     return
     //   }
     //   const { driver, position } = car;
-    //   const newIcon = driver.avatarUrl || defaultAvatar;
+    //   const newIcon = driver.avatarUrl || defaultCarImg;
     //   const newLat = position.latitude || initialLat;
     //   const newLng = position.longitude || initialLng;
     //   const marker = markers.get(id);
