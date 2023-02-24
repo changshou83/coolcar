@@ -44,17 +44,14 @@ Page({
     markers: [] as Marker[],
   },
   /* 生命周期 */
-  async onLoad() {
-    const { avatarURL } = getUserInfo();
-    this.setData({
-      avatarURL,
-    });
-  },
   onShow() {
+    const { avatarURL } = getUserInfo();
+    const markers = this.socket ? this.data.markers : [];
+
     this.isFrontDesk = true;
-    if (!this.socket) {
-      this.setData({ markers: [] }, () => this.setupCarPosUpdater());
-    }
+    this.setData({ markers, avatarURL }, () => {
+      this.socket && this.setupCarPosUpdater();
+    });
   },
   onHide() {
     this.isFrontDesk = false;
@@ -67,7 +64,9 @@ Page({
   /* 页面方法 */
   // 跳转到我的行程
   gotoTrips() {
-    // TODO
+    wx.navigateTo({
+      url: "/pages/myTrips/myTrips",
+    });
   },
   // 定位当前位置
   locateCurLoc() {

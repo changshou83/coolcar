@@ -11,11 +11,11 @@
     <cover-image
       class="round"
       src="{{ avatarURL || '/resources/account.png' }}"
-      bindTap="gotoTrips"
+      bindtap="gotoTrips"
     ></cover-image>
     <cover-image
       src="/resources/my_location.png"
-      bindTap="locateCurLoc"
+      bindtap="locateCurLoc"
     ></cover-image>
   </cover-view>
   <cover-view class="btn-container bg-grey round" bindtap="scanCode">

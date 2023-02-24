@@ -1,0 +1,103 @@
+<!-- 顶部标题和头像 -->
+<view id="heading" class="bg-white padding-xs heading">
+    <view class="text-xl heading-title">我的行程</view>
+    <view class="heading-right margin-right-xl">
+      <button
+        class="avatar-img-container margin-bottom-xs"
+        open-type="chooseAvatar"
+        bind:chooseavatar="chooseAvatar"
+      >
+        <image
+          style="height: 100%;"
+          class="cu-avatar round lg bg-grey margin-sx"
+          src="{{avatarURL}}"
+        />
+      </button>
+      <view class="text-sm {{licenseState==='已认证'?'text-green':'text-red'}}" bindtap="gotoRegister">{{licenseState}}</view>
+    </view>
+</view>
+<!-- 列表展示 -->
+<view class="flex">
+  <!-- 左侧日期列 -->
+  <scroll-view
+    style="height: calc(100vh - 178rpx)"
+    class="bg-white left-nav"
+    scroll-y
+    scroll-with-animation
+    scroll-top="{{dayListScrollTop}}"
+  >
+    <view
+      id="{{ day.id }}"
+      class="cu-item flex justify-center align-center day {{ selectedDay === day.id ? 'cur-day bg-gray' : '' }}"
+      wx:for="{{ days }}"
+      wx:key="id"
+      wx:for-item="day"
+      data-trip-item-id="{{ day.tripItemID }}"
+      bindtap="selectDay"
+    >
+      <view>{{ day.label }}</view>
+    </view>
+  </scroll-view>
+  <!-- 右侧某天行程展示 -->
+  <scroll-view
+    style="height: calc(100vh - 178rpx)"
+    scroll-y
+    enable-back-to-top
+    scroll-with-animation
+    scroll-into-view="{{tripScrollView}}"
+    bindscroll="tripsScroll"
+  >
+    <!-- 单个行程信息 -->
+    <view
+      id="{{tripItem.id}}"
+      class="bg-white margin-bottom margin-left padding-bottom trip"
+      wx:for="{{trips}}"
+      wx:key="id"
+      wx:for-item="tripItem"
+      data-day-item-id="{{tripItem.dayItemID}}"
+      data-trip-id="{{tripItem.data.id}}"
+      data-trip-in-progress="{{tripItem.data.inProgress}}"
+      bindtap="gotoDriving"
+    >
+      <!-- 顶部日期及行程状态 -->
+      <view class="cu-bar solid-bottom padding-right">
+        <view class="action">
+          <text class="cuIcon-title text-green" />
+          <text>{{tripItem.data.id}}</text>
+        </view>
+        <view
+          class="{{tripItem.data.inProgress ? 'text-blue in-progress text-lg text-bold' : ''}}"
+        >
+          <text>{{tripItem.data.status}}</text>
+          <text wx:if="{{tripItem.data.inProgress}}" class="cuIcon-right" />
+        </view>
+      </view>
+      <!-- 底部行程具体信息 -->
+      <view class="flex justify-between padding-top-xs padding-right">
+        <view class="detail-left">
+          <view class="flex">
+            <view class="field padding-lr">起</view>
+            <view class="value text-black text-bold">{{tripItem.data.start}}</view>
+          </view>
+          <!-- <block wx:if="{{!tripItem.data.inProgress}}"> -->
+            <view class="flex">
+              <view class="field padding-lr">终</view>
+              <view class="value text-black text-bold">{{tripItem.data.end}}</view>
+            </view>
+            <view class="flex">
+              <view class="field padding-lr">距</view>
+              <view class="value text-black text-bold flex align-center">{{tripItem.data.distance}}</view>
+            </view>
+            <view class="flex">
+              <view class="field padding-lr">时</view>
+              <view class="value text-black text-bold">{{tripItem.data.duration}}</view>
+            </view>
+          <!-- </block> -->
+        </view>
+        <view class="detail-right" wx:if="{{!tripItem.data.inProgress}}">
+          <view class="text-xxl text-price text-bold">{{tripItem.data.fee}}</view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

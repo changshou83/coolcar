@@ -1,8 +1,7 @@
+import { defaultAvatar } from "../../constants/index";
 import { getUserInfo, routing, setUserInfo } from "../../utils/index";
 
 const enableShareKey = "enable_share_location";
-const defaultAvatarUrl =
-  "https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0";
 
 Page({
   /* 页面状态 */
@@ -10,7 +9,7 @@ Page({
   carRefresher: 0,
   /* 页面数据 */
   data: {
-    avatarUrl: defaultAvatarUrl,
+    avatarUrl: defaultAvatar,
     enableShareLoc: false,
   },
   /* 生命周期函数 */
@@ -20,7 +19,7 @@ Page({
 
     const { avatarURL } = getUserInfo();
     this.setData({
-      avatarUrl: avatarURL || defaultAvatarUrl,
+      avatarUrl: avatarURL || defaultAvatar,
       enableShareLoc: wx.getStorageSync(enableShareKey) || false,
     });
   },

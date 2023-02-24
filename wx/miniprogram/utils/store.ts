@@ -1,6 +1,5 @@
+import { UserInfoKey } from "../constants/index";
 import type { UserInfo } from "../types";
-
-const UserInfoKey = "user_info";
 
 export const setUserInfo = (userInfo: UserInfo) => {
   wx.setStorageSync(UserInfoKey, userInfo);
