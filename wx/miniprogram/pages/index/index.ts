@@ -1,4 +1,5 @@
-import { getUserInfo } from "../../utils/index";
+import { ModalResult } from "../../types/index";
+import { getUserInfo, routing } from "../../utils/index";
 
 interface Marker {
   iconPath: string;
@@ -93,9 +94,16 @@ Page({
   async scanCode() {
     // wx.scanCode({
     //   success: () => {
-    wx.navigateTo({
-      url: "/pages/register/register",
+    const carID = "car123";
+    const redirectURL = routing.lock({
+      car_id: carID,
     });
+    const res = await this.selectComponent("#licModal").showModal();
+    if (res === ModalResult.Confirm) {
+      wx.navigateTo({
+        url: routing.register({ redirectURL }),
+      });
+    }
     //   },
     //   fail: console.error,
     // });
