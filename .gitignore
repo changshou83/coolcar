@@ -131,4 +131,4 @@ dist
 
 # 
 wx/miniprogram/**/*.js
-**/miniprogram_npm/**
+wx/miniprogram/miniprogram_npm
