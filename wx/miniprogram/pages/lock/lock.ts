@@ -6,7 +6,7 @@ const enableShareKey = "enable_share_location";
 Page({
   /* 页面状态 */
   carID: "",
-  carRefresher: 0,
+  carRefresher: undefined as number | undefined,
   /* 页面数据 */
   data: {
     avatarUrl: defaultAvatar,
@@ -79,7 +79,7 @@ Page({
   clearCarRefresher() {
     if (this.carRefresher) {
       clearInterval(this.carRefresher);
-      this.carRefresher = 0;
+      this.carRefresher = undefined;
     }
   },
 });

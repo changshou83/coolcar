@@ -18,6 +18,9 @@
     "strictPropertyInitialization": true,
     "lib": [
       "ES2020"
+    ],
+    "types": [
+      "miniprogram-api-typings"
     ]
   },
   "include": [
