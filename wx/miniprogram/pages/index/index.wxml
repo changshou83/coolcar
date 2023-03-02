@@ -7,7 +7,7 @@
   markers="{{ markers }}"
 >
   <!-- 控件 -->
-  <cover-view class="icon-container">
+  <view class="icon-container">
     <cover-image
       class="round"
       src="{{ avatarURL || '/resources/account.png' }}"
@@ -17,10 +17,10 @@
       src="/resources/my_location.png"
       bindtap="locateCurLoc"
     ></cover-image>
-  </cover-view>
-  <cover-view class="btn-container bg-grey round" bindtap="scanCode">
-    <cover-view>扫码租车</cover-view>
-  </cover-view>
+  </view>
+  <view class="btn-container bg-grey round" bindtap="scanCode">
+    <view>扫码租车</view>
+  </view>
 </map>
 <!-- 弹窗 -->
 <modal id="licModal" title="身份认证">需要身份认证才能租车</modal>
