@@ -129,6 +129,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# 
+# mini-program
 wx/miniprogram/**/*.js
+!wx/miniprogram/services/proto_gen/**/*.js
 wx/miniprogram/miniprogram_npm
+
+private.key
