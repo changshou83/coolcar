@@ -17,7 +17,7 @@ function genProto {
 
   # generate javascript
   PBTS_BIN_DIR=../wx/node_modules/.bin
-  PBTS_OUT_DIR=../wx/miniprogram/services/proto_gen/${DOMAIN}
+  PBTS_OUT_DIR=../wx/miniprogram/apis/proto_gen/${DOMAIN}
   # pbjs
   mkdir -p $PBTS_OUT_DIR
   $PBTS_BIN_DIR/pbjs -t static -w es6 $PROTO_PATH/${DOMAIN}.proto --no-create --no-encode --no-decode --no-verify --no-delimited -o $PBTS_OUT_DIR/${DOMAIN}_pb_tmp.js
