@@ -5,7 +5,7 @@ import (
 	"coolcar/shared/auth/token"
 	"coolcar/shared/id"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -27,7 +27,7 @@ func Interceptor(publicKeyFile string) (grpc.UnaryServerInterceptor, error) {
 		return nil, fmt.Errorf("cannot open public key file: %v", err)
 	}
 
-	bytes, err := ioutil.ReadAll(file)
+	bytes, err := io.ReadAll(file)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read publicKeyFile: %v", err)
 	}
@@ -63,7 +63,6 @@ func (i *interceptor) HandleReq(
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "")
 	}
-
 	aid, err := i.verifier.Verify(token)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "token not valid: %v", err)

@@ -15,6 +15,14 @@ Component({
       type: String,
       value: "弹窗",
     },
+    confirmText: {
+      type: String,
+      value: "确认",
+    },
+    cancelText: {
+      type: String,
+      value: "取消",
+    },
   },
   options: {
     addGlobalClass: true, // 组件样式隔离

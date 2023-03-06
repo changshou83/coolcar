@@ -9,7 +9,7 @@ import (
 	"coolcar/auth/wechat"
 	"coolcar/shared/server"
 	"flag"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -47,7 +47,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("cannot open private key", zap.Error(err))
 	}
-	pkBytes, err := ioutil.ReadAll(pkFile)
+	pkBytes, err := io.ReadAll(pkFile)
 	if err != nil {
 		logger.Fatal("cannot read private key", zap.Error(err))
 	}

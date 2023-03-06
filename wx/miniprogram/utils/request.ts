@@ -61,10 +61,6 @@ export function request<REQ extends WechatMiniprogram.IAnyObject, RES>(
     const header: Record<string, any> = {};
     if (authOpt.attachAuthHeader) {
       const { token, expiryMs } = getAuthData();
-      console.log({
-        token,
-        noExpire: expiryMs >= Date.now(),
-      });
       if (token && expiryMs >= Date.now()) {
         header.authorization = "Bearer " + token;
       } else {

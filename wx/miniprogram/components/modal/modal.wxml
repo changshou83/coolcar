@@ -14,14 +14,14 @@
           style="width: 200rpx"
           bindtap="cancel"
         >
-          取消
+          {{cancelText}}
         </button>
         <button
           class="cu-btn bg-green margin-left"
           style="width: 200rpx"
           bindtap="confirm"
         >
-          确定
+          {{confirmText}}
         </button>
       </view>
     </view>

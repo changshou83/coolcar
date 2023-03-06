@@ -23,7 +23,12 @@
   </view>
 </map>
 <!-- 弹窗 -->
-<modal id="licModal" title="身份认证">需要身份认证才能租车</modal>
+<modal
+  id="licModal"
+  title="身份认证"
+  confirmText="去认证"
+  cancelText="不租车"
+>需要身份认证才能租车</modal>
 <modal id="tripModal" title="行程中">
   当前有正在进行的行程，将跳转到行程页面
 </modal>
