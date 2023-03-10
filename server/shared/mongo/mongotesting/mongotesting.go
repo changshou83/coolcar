@@ -90,6 +90,7 @@ func NewDefaultClient(c context.Context) (*mongo.Client, error) {
 
 // SetupIndexes sets up indexes for the given database
 func SetupIndexes(c context.Context, d *mongo.Database) error {
+	// 对 open_id 建立唯一索引 方便 ResolveAccountID 进行查询
 	_, err := d.Collection("account").Indexes().CreateOne(c, mongo.IndexModel{
 		Keys: bson.D{
 			{Key: "open_id", Value: 1},
@@ -99,19 +100,20 @@ func SetupIndexes(c context.Context, d *mongo.Database) error {
 	if err != nil {
 		return err
 	}
-
-	// _, err = d.Collection("trip").Indexes().CreateOne(c, mongo.IndexModel{
-	// 	Keys: bson.D{
-	// 		{Key: "trip.accountid", Value: 1},
-	// 		{Key: "trip.status", Value: 1},
-	// 	},
-	// 	Options: options.Index().SetUnique(true).SetPartialFilterExpression(bson.M{
-	// 		"trip.status": 1,
-	// 	}),
-	// })
-	// if err != nil {
-	// 	return err
-	// }
+	// 对 accountid 创建索引, 方便 GetTrips 和 UpdateTrip 进行查询
+	// 对 status 创建部分索引，可以创建重复的 status 例如多个结束状态的行程
+	_, err = d.Collection("trip").Indexes().CreateOne(c, mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "trip.accountid", Value: 1},
+			{Key: "trip.status", Value: 1},
+		},
+		Options: options.Index().SetUnique(true).SetPartialFilterExpression(bson.M{
+			"trip.status": 1,
+		}),
+	})
+	if err != nil {
+		return err
+	}
 
 	// _, err = d.Collection("profile").Indexes().CreateOne(c, mongo.IndexModel{
 	// 	Keys: bson.D{

@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	IDFieldName       = "_id"
-	UpdateAtFieldName = "updatedAt"
+	IDFieldName        = "_id"
+	UpdatedAtFieldName = "updatedat"
 )
 
 // IDField defines the ObjectID field
@@ -22,7 +22,7 @@ type IDField struct {
 
 // UpdateAtField defines the updateAt field
 type UpdateAtField struct {
-	UpdatedAt int64 `bson="updated_at"`
+	UpdatedAt int64 `bson:"updatedat"`
 }
 
 // NewObjID generates a new object id.
@@ -35,9 +35,16 @@ func NewObjIDWithValue(id fmt.Stringer) {
 	}
 }
 
-// UpdateAt returns a value suitable for UpdatedAt field.
-var UpdateAt = func() int64 {
+// UpdatedAt returns a value suitable for UpdatedAt field.
+var UpdatedAt = func() int64 {
 	return time.Now().UnixNano()
+}
+
+// NewUpdatedAtWithValue sets id for next updatedAt generation.
+func NewUpdatedAtWithValue(now int64) {
+	UpdatedAt = func() int64 {
+		return now
+	}
 }
 
 // Set returns a $set update document
@@ -51,6 +58,13 @@ func Set(v interface{}) bson.M {
 func SetOnInsert(v interface{}) bson.M {
 	return bson.M{
 		"$setOnInsert": v,
+	}
+}
+
+// In returns $in update document
+func In(v interface{}) bson.M {
+	return bson.M{
+		"$in": v,
 	}
 }
 

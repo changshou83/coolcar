@@ -6,3 +6,9 @@ http:
     - selector: rental.v1.TripService.CreateTrip
       post: /v1/trip
       body: "*"
+    - selector: rental.v1.TripService.GetTrips
+      post: /v1/trips
+      body: "*"
+    - selector: rental.v1.TripService.UpdateTrip
+      put: /v1/trip/{id}
+      body: "*"

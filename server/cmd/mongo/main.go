@@ -31,8 +31,8 @@ func findRows(c context.Context, col *mongo.Collection) {
 
 	for cur.Next(c) {
 		var row struct {
-			ID     primitive.ObjectID `bson="_id"`
-			OpenID string             `bson="open_id"`
+			ID     primitive.ObjectID `bson:"_id"`
+			OpenID string             `bson:"open_id"`
 		}
 		err = cur.Decode(&row)
 		if err != nil {

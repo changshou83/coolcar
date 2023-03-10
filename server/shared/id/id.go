@@ -14,6 +14,13 @@ func (t TripID) String() string {
 	return string(t)
 }
 
+// IdentityID defines identity id object.
+type IdentityID string
+
+func (i IdentityID) String() string {
+	return string(i)
+}
+
 // CarID defines car id Object.
 type CarID string
 
