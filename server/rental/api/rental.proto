@@ -2,43 +2,11 @@ syntax = "proto3";
 package rental.v1;
 option go_package="coolcar/rental/api/gen/v1;rentalpb";
 
-// 经纬度
-message Location {
-  double latitude = 1;
-  double longitude = 2;
-}
+// 使用 protoc 编译时
+import "trip.proto";
+import "profile.proto";
 
-message LocationStatus {
-  Location location = 1;
-  int32 fee_cent = 2;
-  double km_driven = 3;
-  string loc_desc = 4;
-  int64 timestamp_sec = 5;
-}
-
-// 未开始 | 进行中 | 已完成
-enum TripStatus {
-  TS_NOT_SPECIFIED = 0;
-  IN_PROGRESS = 1;
-  FINISHED = 2;
-}
-
-message Trip {
-  string account_id = 1;
-  string car_id = 2;
-  string identity_id = 3;
-  TripStatus status = 4;
-  LocationStatus start = 5;
-  LocationStatus end = 6;
-  LocationStatus current = 7;
-}
-
-message TripEntity {
-  string id = 1;
-  Trip trip = 2;
-}
-
-// Req & Res
+// TripService
 message CreateTripRequest {
   Location start = 1;
   string car_id = 2;
@@ -63,4 +31,14 @@ service TripService {
   rpc CreateTrip(CreateTripRequest) returns (TripEntity);
   rpc GetTrips(GetTripsRequest) returns (GetTripsResponse);
   rpc UpdateTrip(UpdateTripRequest) returns (Trip);
+}
+
+// ProfileService
+message GetProfileRequest{}
+message ClearProfileRequest{}
+
+service ProfileService {
+  rpc GetProfile(GetProfileRequest) returns (Profile);
+  rpc SubmitProfile(Identity) returns (Profile);
+  rpc ClearProfile(ClearProfileRequest) returns (Profile);
 }
