@@ -1,3 +1,4 @@
+import { getTrips } from "../../apis/trip";
 import { defaultAvatar } from "../../constants/index";
 import { getUserInfo, routing, setUserInfo } from "../../utils/index";
 
@@ -76,7 +77,8 @@ Page({
     });
   },
   async onReady() {
-    // const { trips } = await TripService.getTrips();
+    await getTrips();
+    // const { trips } = await getTrips();
     this.populateTrips();
   },
   /* 页面方法 */
@@ -146,6 +148,7 @@ Page({
     const days: DayItem[] = [];
     const trips: TripItem[] = [];
     let selectedDay;
+    // let prevTripDate;
     for (let i = 0; i < 100; i++) {
       const dayItemID = "day-item-" + i;
       const tripItemID = "trip-item-" + i;
@@ -160,6 +163,8 @@ Page({
         status: "已完成",
       };
 
+      // TODO:如果他们是同一天的，就不推新的day，并且新的trip的dayItemID与上一个相同
+      // if(prevTripDate == currentTripDate) {}
       trips.push({ dayItemID, id: tripItemID, data: tripData });
       days.push({ tripItemID, id: dayItemID, label: (10001 + i).toString() });
 

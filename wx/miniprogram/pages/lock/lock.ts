@@ -1,3 +1,4 @@
+import { createTrip } from "../../apis/trip";
 import { defaultAvatar } from "../../constants/index";
 import { getUserInfo, routing, setUserInfo } from "../../utils/index";
 
@@ -14,7 +15,7 @@ Page({
   },
   /* 生命周期函数 */
   async onLoad(opts: Record<"car_id", string>) {
-    const { car_id } = opts as routing.LockOpts;
+    const { car_id }: routing.LockOpts = opts;
     this.carID = car_id;
 
     const { avatarURL } = getUserInfo();
@@ -36,18 +37,26 @@ Page({
   unlock() {
     wx.getLocation({
       type: "gcj02",
-      success: async () => {
-        // if (!this.carID) {
-        //   console.error("no car id specified");
-        //   return;
-        // }
+      success: async (loc) => {
+        if (!this.carID) {
+          console.error("no car id specified");
+          return;
+        }
+        const { id } = await createTrip({
+          start: {
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          },
+          carId: this.carID,
+          avatarUrl: this.data.avatarUrl,
+        });
         wx.showToast({
           title: "开锁中...",
           mask: true,
         });
         this.carRefresher = setInterval(async () => {
           const state = "UNLOCKED";
-          const trip_id = "1";
+          const trip_id = id;
           if (state === "UNLOCKED") {
             this.clearCarRefresher();
             wx.redirectTo({

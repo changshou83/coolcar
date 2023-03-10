@@ -1,4 +1,5 @@
-import { formatFee, routing } from "../../utils/index";
+import { formatElapsed, formatFee, routing } from "../../utils/index";
+import { getTrip } from "../../apis/trip";
 
 // const updaterInterval = 5;
 const initialLat = 42.05297;
@@ -57,7 +58,8 @@ Page({
   },
   /* 辅助方法 */
   async setupTimer() {
-    // const { start, current } = await TripService.getTrip(this.tripID);
+    await getTrip(this.tripID);
+    // const { start, current } = await getTrip(this.tripID);
     // let sinceLastUpdate = 0;
     // let lastUpdateDuration = current!.timestampSec! - start!.timestampSec!;
     // this.updateMarkers(current);
