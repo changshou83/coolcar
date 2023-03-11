@@ -114,16 +114,16 @@ func SetupIndexes(c context.Context, d *mongo.Database) error {
 	if err != nil {
 		return err
 	}
-
-	// _, err = d.Collection("profile").Indexes().CreateOne(c, mongo.IndexModel{
-	// 	Keys: bson.D{
-	// 		{Key: "accountid", Value: 1},
-	// 	},
-	// 	Options: options.Index().SetUnique(true),
-	// })
-	// if err != nil {
-	// 	return err
-	// }
+	// 对 accountid 创建索引, 方便 GetProfile 和 UpdateProfile 进行查询
+	_, err = d.Collection("profile").Indexes().CreateOne(c, mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "accountid", Value: 1},
+		},
+		Options: options.Index().SetUnique(true),
+	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

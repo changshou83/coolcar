@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	rentalpb "coolcar/rental/api/gen/v1"
+	"coolcar/rental/profile"
+	profiledao "coolcar/rental/profile/dao"
 	"coolcar/rental/trip"
 	"coolcar/rental/trip/client/car"
 	locdesc "coolcar/rental/trip/client/locDesc"
-	"coolcar/rental/trip/client/profile"
+	profileClient "coolcar/rental/trip/client/profile"
 	tripdao "coolcar/rental/trip/dao"
 	"coolcar/shared/server"
 	"flag"
@@ -41,19 +43,29 @@ func main() {
 	}
 	db := mc.Database("coolcar")
 
+	// create profile server
+	profService := &profile.Service{
+		Mongo:  profiledao.NewMongo(db),
+		Logger: logger,
+	}
+
+	// run grpc server
 	err = server.RunGRPCServer(&server.GRPCConfig{
 		Name:              "coolcar/rental",
 		Addr:              *addr,
 		AuthPublicKeyFile: *authPublicKeyFile,
 		Logger:            logger,
 		RegisterFunc: func(s *grpc.Server) {
+			// register trip service
 			rentalpb.RegisterTripServiceServer(s, &trip.Service{
 				Logger:         logger,
 				Mongo:          tripdao.NewMongo(db),
 				LocDescManager: &locdesc.Manager{},
 				CarManager:     &car.Manager{},
-				ProfileManager: &profile.Manager{},
+				ProfileManager: &profileClient.Manager{},
 			})
+			// register profile service
+			rentalpb.RegisterProfileServiceServer(s, profService)
 		},
 	})
 	if err != nil {
