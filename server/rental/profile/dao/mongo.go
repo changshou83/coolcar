@@ -45,7 +45,7 @@ func (m *Mongo) GetProfile(
 		return nil, err
 	}
 	var record ProfileRecord
-	err := res.Decode(record)
+	err := res.Decode(&record)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode profile: %v", err)
 	}

@@ -62,7 +62,9 @@ func main() {
 				Mongo:          tripdao.NewMongo(db),
 				LocDescManager: &locdesc.Manager{},
 				CarManager:     &car.Manager{},
-				ProfileManager: &profileClient.Manager{},
+				ProfileManager: &profileClient.Manager{
+					Fetcher: profService,
+				},
 			})
 			// register profile service
 			rentalpb.RegisterProfileServiceServer(s, profService)
