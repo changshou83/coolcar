@@ -1,3 +1,6 @@
+import { getProfile } from "../../apis/profile";
+import { rental } from "../../apis/proto_gen/rental/rental_pb";
+import { getTrips } from "../../apis/trip";
 import { ModalResult } from "../../types/index";
 import { getUserInfo, routing } from "../../utils/index";
 
@@ -92,21 +95,40 @@ Page({
   },
   // 扫码
   async scanCode() {
-    // wx.scanCode({
-    //   success: () => {
-    const carID = "car123";
-    const redirectURL = routing.lock({
-      car_id: carID,
-    });
-    const res = await this.selectComponent("#licModal").showModal();
-    if (res === ModalResult.Confirm) {
+    const { trips } = await getTrips();
+    const inProgressTrips =
+      trips?.filter(
+        (t) => t.trip?.status === rental.v1.TripStatus.IN_PROGRESS
+      ) || [];
+    if (inProgressTrips.length > 0) {
+      await this.selectComponent("#tripModal").showModal();
       wx.navigateTo({
-        url: routing.register({ redirectURL }),
+        url: routing.driving({
+          trip_id: inProgressTrips[0].id!,
+        }),
       });
+      return;
     }
-    //   },
-    //   fail: console.error,
-    // });
+
+    wx.scanCode({
+      success: async () => {
+        // TODO: get car id from scan result.
+        const car_id = "car123";
+        const redirectURL = routing.lock({ car_id });
+        const profile = await getProfile();
+        if (profile.status === rental.v1.IdentityStatus.VERIFIED) {
+          wx.navigateTo({ url: redirectURL });
+        } else {
+          const res = await this.selectComponent("#licModal").showModal();
+          if (res === ModalResult.Confirm) {
+            wx.navigateTo({
+              url: routing.register({ redirectURL }),
+            });
+          }
+        }
+      },
+      fail: console.error,
+    });
   },
   /* 辅助方法 */
   setupCarPosUpdater() {

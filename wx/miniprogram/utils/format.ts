@@ -44,10 +44,9 @@ export function formatFee(cents: number) {
 }
 
 const formatNumber = (n: number) => {
-  const s = n.toString();
-  return s[1] ? s : "0" + s;
+  return n.toString().padStart(2, "0");
 };
 
 function padString(n: number) {
-  return n < 10 ? "0" + n.toFixed(0) : n.toFixed(0);
+  return n.toFixed(0).padStart(2, "0");
 }

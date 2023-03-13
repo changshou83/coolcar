@@ -1,5 +1,5 @@
-import { formatElapsed, formatFee, routing } from "../../utils/index";
-import { getTrip } from "../../apis/trip";
+import { formatFee, routing } from "../../utils/index";
+import { finishTrip, getTrip } from "../../apis/trip";
 
 // const updaterInterval = 5;
 const initialLat = 42.05297;
@@ -44,7 +44,7 @@ Page({
   /* 页面方法 */
   async endTrip() {
     try {
-      // await TripService.finishTrip(this.tripID);
+      await finishTrip(this.tripID);
       wx.redirectTo({
         url: "/pages/myTrips/myTrips",
       });

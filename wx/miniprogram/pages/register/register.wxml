@@ -2,7 +2,7 @@
   <!-- 未上传驾驶证 -->
   <view
     class="license-placeholder"
-    wx:if="{{!licenseImgUrl}}"
+    wx:if="{{licenseState !== 'VERIFIED' && !licenseImgUrl}}"
     bindtap="uploadLicense"
   >
     <image class="license-placeholder-img" src="/resources/lic.png" />
@@ -22,7 +22,8 @@
         <view class="title">驾驶证号：</view>
         <input
           placeholder="请输入驾驶证号"
-          model:value="{{form.licenseId}}"
+          value="{{form.licNumber}}"
+          bindinput="changeLicNumber"
           disabled="{{licenseState !== 'UNSUBMITTED'}}"
         />
       </view>
@@ -30,7 +31,8 @@
         <view class="title">姓名：</view>
         <input
           placeholder="请输入姓名"
-          model:value="{{form.name}}"
+          value="{{form.name}}"
+          bindinput="changeName"
           disabled="{{licenseState !== 'UNSUBMITTED'}}"
         />
       </view>

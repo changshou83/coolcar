@@ -1,3 +1,5 @@
+import { getProfile } from "../../apis/profile";
+import { rental } from "../../apis/proto_gen/rental/rental_pb";
 import { getTrips } from "../../apis/trip";
 import { defaultAvatar } from "../../constants/index";
 import { getUserInfo, routing, setUserInfo } from "../../utils/index";
@@ -46,11 +48,12 @@ interface ScrollState {
 //   [rental.v1.TripStatus.FINISHED, "已完成"],
 // ]);
 
-// const licStatusMap = new Map([
-//   [rental.v1.IdentityStatus.UNSUBMITTED, "未认证"],
-//   [rental.v1.IdentityStatus.PENDING, "未认证"],
-//   [rental.v1.IdentityStatus.VERIFIED, "已认证"],
-// ]);
+const IdentityStatus = rental.v1.IdentityStatus;
+const licStatusMap = new Map([
+  [IdentityStatus.UNSUBMITTED, "未认证"],
+  [IdentityStatus.PENDING, "未认证"],
+  [IdentityStatus.VERIFIED, "已认证"],
+]);
 
 Page({
   /* 页面状态 */
@@ -58,7 +61,7 @@ Page({
   dayListState: [] as DayItemQueryResult[],
   /* 页面数据 */
   data: {
-    licenseState: "已认证",
+    licenseState: licStatusMap.get(IdentityStatus.UNSUBMITTED),
     avatarURL: "",
     trips: [] as TripItem[],
     tripScrollView: "",
@@ -70,10 +73,14 @@ Page({
   async onLoad() {
     // 获取头像
     const { avatarURL = defaultAvatar } = getUserInfo();
-    // const { identityStatus = 0 } = await ProfileService.getProfile();
     this.setData({
       avatarURL,
-      // licenseState: licStatusMap.get(identityStatus),
+    });
+  },
+  async onShow() {
+    const { status } = await getProfile();
+    this.setData({
+      licenseState: licStatusMap.get(status ?? IdentityStatus.UNSUBMITTED),
     });
   },
   async onReady() {
@@ -83,8 +90,10 @@ Page({
   },
   /* 页面方法 */
   gotoRegister() {
+    const url = routing.register();
+    console.log(url);
     wx.navigateTo({
-      url: routing.register(),
+      url,
     });
   },
   gotoDriving(evt: any) {
