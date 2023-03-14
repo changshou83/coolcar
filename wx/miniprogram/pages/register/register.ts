@@ -1,6 +1,14 @@
-import { submitProfile, getProfile, clearProfile } from "../../apis/profile";
+import {
+  submitProfile,
+  getProfile,
+  clearProfile,
+  getProfilePhoto,
+  createProfilePhoto,
+  verifyProfilePhoto,
+  clearProfilePhoto,
+} from "../../apis/profile";
 import { rental } from "../../apis/proto_gen/rental/rental_pb";
-import { formatDate } from "../../utils/index";
+import { formatDate, uploadFile } from "../../utils/index";
 
 const State = rental.v1.IdentityStatus;
 
@@ -27,11 +35,21 @@ Page({
       this.redirectURL = decodeURIComponent(redirect);
     }
     // render profile
+    let url = "";
     const profile = await getProfile();
-    this.renderProfile(profile);
+    if (profile.status !== State.UNSUBMITTED) {
+      const photo = await getProfilePhoto();
+      url = photo.url ?? "";
+    }
+    this.renderProfile(profile, url);
   },
-  onUnload() {
+  async onUnload() {
+    // delete refresher
     this.clearProfileRefresher();
+    // if not submit, delete profile photo
+    if (this.data.licenseState === State[State.UNSUBMITTED]) {
+      await clearProfilePhoto();
+    }
   },
   /* 页面方法 */
   changeLicNumber(evt: any) {
@@ -78,16 +96,33 @@ Page({
   },
   async resubmit() {
     const profile = await clearProfile();
-    this.renderProfile(profile);
+    await clearProfilePhoto();
+    this.renderProfile(profile, "");
   },
   uploadLicense() {
     wx.chooseMedia({
+      count: 1,
+      mediaType: ["image"],
       success: async ({ tempFiles }) => {
         if (tempFiles.length === 0) return;
-
-        this.setData({
-          licenseImgUrl: tempFiles[0].tempFilePath,
+        const path = tempFiles[0].tempFilePath;
+        // upload file
+        const { uploadUrl } = await createProfilePhoto();
+        if (!uploadUrl) return;
+        await uploadFile({
+          url: uploadUrl,
+          localPath: path,
         });
+        // verify file
+        const identity = await verifyProfilePhoto();
+        // render profile
+        if (identity) {
+          const form = this.getNewIdentity(identity);
+          this.setData({
+            form,
+            licenseImgUrl: path,
+          });
+        }
       },
     });
   },
@@ -118,10 +153,11 @@ Page({
     };
     return form;
   },
-  renderProfile(profile: rental.v1.IProfile) {
+  renderProfile(profile: rental.v1.IProfile, photoURL?: string) {
     const form = this.getNewIdentity(profile.identity!);
     this.setData({
       form,
+      ...(photoURL != undefined ? { licenseImgUrl: photoURL || "" } : {}),
       licenseState: State[profile.status || State.UNSUBMITTED],
     });
   },

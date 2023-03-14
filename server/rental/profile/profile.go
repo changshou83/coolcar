@@ -2,9 +2,11 @@ package profile
 
 import (
 	"context"
+	blobpb "coolcar/blob/api/gen/v1"
 	rentalpb "coolcar/rental/api/gen/v1"
 	"coolcar/rental/profile/dao"
 	"coolcar/shared/auth"
+	"coolcar/shared/id"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,11 +16,15 @@ import (
 )
 
 // type IdentityResolver interface {
-// 	Resolver(c context.Context, photo []byte) (*rentalpb.Identity, error)
+// 	Resolve(c context.Context, photo []byte) (*rentalpb.Identity, error)
 // }
 
 type Service struct {
-	// IdentityResolver IdentityResolver
+	// IdentityResolver  IdentityResolver
+	BlobClient        blobpb.BlobServiceClient
+	PhotoGetExpire    time.Duration
+	PhotoUploadExpire time.Duration
+
 	Mongo  *dao.Mongo
 	Logger *zap.Logger
 	rentalpb.UnimplementedProfileServiceServer
@@ -102,6 +108,122 @@ func (s *Service) ClearProfile(
 		return nil, status.Error(codes.Internal, "")
 	}
 	return profile, nil
+}
+
+// GetProfilePhoto returns a url for download files.
+func (s *Service) GetProfilePhoto(
+	c context.Context,
+	req *rentalpb.GetProfilePhotoRequest,
+) (*rentalpb.GetProfilePhotoResponse, error) {
+	aid, err := auth.AccountIDFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+
+	profile, err := s.Mongo.GetProfile(c, aid)
+	if err != nil {
+		return nil, status.Error(s.logAndConvertProfileErr(err), "")
+	}
+	if profile.PhotoBlobID == "" {
+		return nil, status.Error(codes.NotFound, "")
+	}
+
+	record, err := s.BlobClient.GetBlobURL(c, &blobpb.GetBlobURLRequest{
+		Id:         profile.PhotoBlobID,
+		TimeoutSec: int32(s.PhotoGetExpire.Seconds()),
+	})
+	if err != nil {
+		s.Logger.Error("cannot get blob", zap.Error(err))
+		return nil, status.Error(codes.Internal, "")
+	}
+
+	return &rentalpb.GetProfilePhotoResponse{
+		Url: record.Url,
+	}, nil
+}
+
+// CreateProfilePhoto returns a url for upload files.
+func (s *Service) CreateProfilePhoto(
+	c context.Context,
+	req *rentalpb.CreateProfilePhotoRequest,
+) (*rentalpb.CreateProfilePhotoResponse, error) {
+	aid, err := auth.AccountIDFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+	// 获得预签名 URL
+	record, err := s.BlobClient.CreateBlob(c, &blobpb.CreateBlobRequest{
+		AccountId:           aid.String(),
+		UploadUrlTimeoutSec: int32(s.PhotoUploadExpire.Seconds()),
+	})
+	if err != nil {
+		s.Logger.Error("cannot create blob", zap.Error(err))
+		return nil, status.Error(codes.Aborted, "")
+	}
+	// 为对应 profile 添加 blobid
+	err = s.Mongo.UpdateProfilePhoto(c, aid, id.BlobID(record.Id))
+	if err != nil {
+		s.Logger.Error("cannot update profile photo", zap.Error(err))
+		return nil, status.Error(codes.Aborted, "")
+	}
+	// 返回预签名 URL
+	return &rentalpb.CreateProfilePhotoResponse{
+		UploadUrl: record.UploadUrl,
+	}, nil
+}
+
+// VerifyProfilePhoto returns AI recognition results.
+func (s *Service) VerifyProfilePhoto(
+	c context.Context,
+	req *rentalpb.VerifyProfilePhotoRequest,
+) (*rentalpb.Identity, error) {
+	aid, err := auth.AccountIDFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+	// get blob id
+	profile, err := s.Mongo.GetProfile(c, aid)
+	if err != nil {
+		return nil, status.Error(s.logAndConvertProfileErr(err), "")
+	}
+	if profile.PhotoBlobID == "" {
+		return nil, status.Error(codes.NotFound, "")
+	}
+	// get blob
+	blob, err := s.BlobClient.GetBlob(c, &blobpb.GetBlobRequest{
+		Id: profile.PhotoBlobID,
+	})
+	if err != nil {
+		s.Logger.Error("cannot get blob", zap.Error(err))
+		return nil, status.Error(codes.Aborted, "")
+	}
+	// verify
+	s.Logger.Info("got profile photo", zap.Int("size", len(blob.Data)))
+	return &rentalpb.Identity{
+		LicNumber:   "210282198809294228",
+		Name:        "王涛涛",
+		Gender:      rentalpb.Gender_FEMALE,
+		BirthDateMs: 631152000000,
+	}, nil
+	// return s.IdentityResolver.Resolve(c, blob.Data)
+}
+
+// ClearProfilePhoto clears profile photo.
+func (s *Service) ClearProfilePhoto(
+	c context.Context,
+	req *rentalpb.ClearProfilePhotoRequest,
+) (*rentalpb.ClearProfilePhotoResponse, error) {
+	aid, err := auth.AccountIDFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.Mongo.UpdateProfilePhoto(c, aid, id.BlobID(""))
+	if err != nil {
+		s.Logger.Error("cannot clear profile photo", zap.Error(err))
+		return nil, status.Error(codes.Internal, "")
+	}
+	return &rentalpb.ClearProfilePhotoResponse{}, nil
 }
 
 // logAndConvertProfileErr converts mongo err to http err

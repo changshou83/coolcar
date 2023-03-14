@@ -16,7 +16,7 @@ const (
 	accountIDField      = "accountid"
 	profileField        = "profile"
 	identityStatusField = profileField + ".status"
-	// photoBlobIDField    = "photoblobid"
+	photoBlobIDField    = "photoblobid"
 )
 
 type Mongo struct {
@@ -30,8 +30,9 @@ func NewMongo(db *mongo.Database) *Mongo {
 }
 
 type ProfileRecord struct {
-	AccountID string            `bson:"accountid"`
-	Profile   *rentalpb.Profile `bson:"profile"`
+	AccountID   string            `bson:"accountid"`
+	Profile     *rentalpb.Profile `bson:"profile"`
+	PhotoBlobID string            `bson:"photoblobid"`
 }
 
 func (m *Mongo) GetProfile(
@@ -77,16 +78,22 @@ func (m *Mongo) UpdateProfile(
 	return err
 }
 
-// func (m *Mongo) updateProfilePhoto(
-// 	c context.Context,
-// 	aid id.AccountID,
-// 	bid id.BlobID,
-// ) error {
-// 	_, err := m.collection.UpdateOne(c, bson.M{
-// 		accountIDField: aid.String(),
-// 	}, mgutil.Set(bson.M{
-// 		accountIDField:   aid.String(),
-// 		photoBlobIDField: bid.String(),
-// 	}), options.Update().SetUpsert(true))
-// 	return err
-// }
+func (m *Mongo) UpdateProfilePhoto(
+	c context.Context,
+	aid id.AccountID,
+	bid id.BlobID,
+) error {
+	_, err := m.collection.UpdateOne(
+		c,
+		bson.M{
+			accountIDField: aid.String(),
+		},
+		mgutil.Set(bson.M{
+			accountIDField:   aid.String(),
+			photoBlobIDField: bid.String(),
+		}),
+		options.Update().SetUpsert(true),
+	)
+
+	return err
+}
