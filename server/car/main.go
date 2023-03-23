@@ -1,4 +1,4 @@
-package car
+package main
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"coolcar/car/car"
 	"coolcar/car/dao"
 	"coolcar/car/mq/amqpclt"
+	"coolcar/car/sim"
 	"coolcar/shared/server"
 	"flag"
 	"log"
@@ -20,8 +21,8 @@ import (
 var (
 	addr = flag.String("addr", ":8084", "address to listen")
 	// wsAddr   = flag.String("ws_addr", ":9090", "websocket address to listen")
-	carAddr  = flag.String("car_addr", "localhost:8084", "address for car service")
-	tripAddr = flag.String("trip_addr", "locahost:8082", "address for trip service")
+	carAddr = flag.String("car_addr", "localhost:8084", "address for car service")
+	// tripAddr = flag.String("trip_addr", "locahost:8082", "address for trip service")
 	// aiAddr   = flag.String("ai_addr", "localhost:18001", "address for ai service")
 
 	mongoURI = flag.String("mongo_uri", "mongodb://localhost:27017", "mongo uri")
@@ -52,6 +53,21 @@ func main() {
 	if err != nil {
 		logger.Fatal("cannot create publisher", zap.Error(err))
 	}
+	// run car simulations
+	carConn, err := grpc.Dial(*carAddr, grpc.WithInsecure())
+	if err != nil {
+		logger.Fatal("cannot connect car service", zap.Error(err))
+	}
+	sub, err := amqpclt.NewSubscriber(amqpConn, exchange, logger)
+	if err != nil {
+		logger.Fatal("cannot create subscriber", zap.Error(err))
+	}
+	simController := &sim.Controller{
+		Logger:        logger,
+		CarService:    carpb.NewCarServiceClient(carConn),
+		CarSubscriber: sub,
+	}
+	go simController.RunSimulations(context.Background())
 	// run grpc
 	err = server.RunGRPCServer(&server.GRPCConfig{
 		Name:   "coolcar/car",

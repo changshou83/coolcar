@@ -73,6 +73,7 @@ func (s *Service) UpdateCar(c context.Context, req *carpb.UpdateCarRequest) (*ca
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	// 汽车状态更新推送到 rabbitmq 中
 	s.publish(c, car)
 	return &carpb.UpdateCarResponse{}, nil
 }
@@ -89,6 +90,7 @@ func (s *Service) LockCar(c context.Context, req *carpb.LockCarRequest) (*carpb.
 		return nil, status.Errorf(code, "cannot update: %v", err)
 	}
 
+	// 汽车状态更新推送到 rabbitmq 中
 	s.publish(c, car)
 	return &carpb.LockCarResponse{}, nil
 }
@@ -107,6 +109,7 @@ func (s *Service) UnlockCar(c context.Context, req *carpb.UnlockCarRequest) (*ca
 		}
 		return nil, status.Errorf(code, "cannot update: %v", err)
 	}
+	// 汽车状态更新推送到 rabbitmq 中
 	s.publish(c, car)
 	return &carpb.UnlockCarResponse{}, nil
 }

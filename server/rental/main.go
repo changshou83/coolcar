@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	blobpb "coolcar/blob/api/gen/v1"
+	carpb "coolcar/car/api/gen/v1"
 	rentalpb "coolcar/rental/api/gen/v1"
 	"coolcar/rental/profile"
 	profiledao "coolcar/rental/profile/dao"
@@ -25,9 +26,9 @@ import (
 var addr = flag.String("addr", ":8082", "address to listen")
 var mongoURI = flag.String("mongo_uri", "mongodb://localhost:27017", "mongo uri")
 var blobAddr = flag.String("blob_addr", "localhost:8083", "address for blob service")
+var carAddr = flag.String("car_addr", "localhost:8084", "address for car service")
 
 // var aiAddr = flag.String("ai_addr", "localhost:18001", "address for ai service")
-// var carAddr = flag.String("car_addr", "localhost:8084", "address for car service")
 var authPublicKeyFile = flag.String("auth_public_key_file", "shared/public.key", "public key file for auth")
 
 func main() {
@@ -59,6 +60,11 @@ func main() {
 		Mongo:  profiledao.NewMongo(db),
 		Logger: logger,
 	}
+	// connect car service
+	carConn, err := grpc.Dial(*carAddr, grpc.WithInsecure())
+	if err != nil {
+		logger.Fatal("cannot connect car service", zap.Error(err))
+	}
 
 	// run grpc server
 	err = server.RunGRPCServer(&server.GRPCConfig{
@@ -72,7 +78,9 @@ func main() {
 				Logger:         logger,
 				Mongo:          tripdao.NewMongo(db),
 				LocDescManager: &locdesc.Manager{},
-				CarManager:     &car.Manager{},
+				CarManager: &car.Manager{
+					CarService: carpb.NewCarServiceClient(carConn),
+				},
 				ProfileManager: &profileClient.Manager{
 					Fetcher: profService,
 				},
