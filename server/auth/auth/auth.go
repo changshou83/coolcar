@@ -52,7 +52,7 @@ func (s *Service) Login(ctx context.Context, req *authpb.LoginRequest) (*authpb.
 	}
 
 	return &authpb.LoginResponse{
-		AssessToken: token,
+		AccessToken: token,
 		ExpiresIn:   int32(s.TokenExpire.Seconds()),
 	}, nil
 }

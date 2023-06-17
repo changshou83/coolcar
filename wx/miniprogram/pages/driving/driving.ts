@@ -1,7 +1,8 @@
-import { formatFee, routing } from "../../utils/index";
-import { finishTrip, getTrip } from "../../apis/trip";
+import { formatElapsed, formatFee, routing } from "../../utils/index";
+import { finishTrip, getTrip, updateTripPos } from "../../apis/trip";
+import { rental } from "../../apis/proto_gen/rental/rental_pb";
 
-// const updaterInterval = 5;
+const updaterInterval = 5;
 const initialLat = 42.05297;
 const initialLng = 123.52658;
 
@@ -58,30 +59,37 @@ Page({
   },
   /* 辅助方法 */
   async setupTimer() {
-    await getTrip(this.tripID);
-    // const { start, current } = await getTrip(this.tripID);
-    // let sinceLastUpdate = 0;
-    // let lastUpdateDuration = current!.timestampSec! - start!.timestampSec!;
-    // this.updateMarkers(current);
-    // this.setData({
-    //   elapsed: formatElapsed(sinceLastUpdate + lastUpdateDuration),
-    // });
+    const { start, current, status } = await getTrip(this.tripID);
+    if (status !== rental.v1.TripStatus.IN_PROGRESS) {
+      console.error("trip not in progress");
+      return;
+    }
+    let sinceLastUpdate = 0;
+    let lastUpdateDuration = current!.timestampSec! - start!.timestampSec!;
+    this.updateMarkers(current);
+    this.setData({
+      elapsed: formatElapsed(lastUpdateDuration),
+    });
 
-    this.timer = setInterval(() => {
-      // sinceLastUpdate++;
-      // if (sinceLastUpdate % updaterInterval === 0) {
-      //   try {
-      //     const { start, current } = await TripService.getTrip(this.tripID);
-      //     sinceLastUpdate = 0;
-      //     lastUpdateDuration = current!.timestampSec! - start!.timestampSec!;
-      //     this.updateMarkers(current);
-      //   } catch (err) {
-      //     console.error(err);
-      //   }
-      // }
-      // this.setData({
-      //   elapsed: formatElapsed(sinceLastUpdate + lastUpdateDuration),
-      // });
+    this.timer = setInterval(async () => {
+      sinceLastUpdate++;
+      if (sinceLastUpdate % updaterInterval === 0) {
+        try {
+          const { start, current } = await getTrip(this.tripID);
+          sinceLastUpdate = 0;
+          lastUpdateDuration = current!.timestampSec! - start!.timestampSec!;
+          lastUpdateDuration =
+            lastUpdateDuration === 0 ? 5 : lastUpdateDuration;
+          this.updateMarkers(current);
+          // 前端更新位置
+          await updateTripPos(this.tripID, this.data.location);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      this.setData({
+        elapsed: formatElapsed(sinceLastUpdate + lastUpdateDuration),
+      });
     }, 1000);
   },
   setupLocationUpdater() {

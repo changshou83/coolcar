@@ -6,8 +6,13 @@ import (
 	"coolcar/shared/id"
 	mgutil "coolcar/shared/mongo"
 	"coolcar/shared/mongo/mongotesting"
+	"coolcar/shared/mongo/objid"
 	"os"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func TestCreateTrip(t *testing.T) {
@@ -90,29 +95,88 @@ func TestCreateTrip(t *testing.T) {
 	}
 }
 
+func TestGetTrip(t *testing.T) {
+	c := context.Background()
+	mc, err := mongotesting.NewClient(c)
+	if err != nil {
+		t.Fatalf("cannot connect mongodb: %v", err)
+	}
+
+	m := NewMongo(mc.Database("coolcar"))
+	acct := id.AccountID("account1")
+	mgutil.NewObjID = primitive.NewObjectID
+	tr, err := m.CreateTrip(c, &rentalpb.Trip{
+		AccountId: acct.String(),
+		CarId:     "car1",
+		Start: &rentalpb.LocationStatus{
+			PoiName: "startpoint",
+			Location: &rentalpb.Location{
+				Latitude:  30,
+				Longitude: 120,
+			},
+		},
+		End: &rentalpb.LocationStatus{
+			PoiName:  "endpoint",
+			FeeCent:  10000,
+			KmDriven: 35,
+			Location: &rentalpb.Location{
+				Latitude:  35,
+				Longitude: 115,
+			},
+		},
+		Status: rentalpb.TripStatus_FINISHED,
+	})
+	if err != nil {
+		t.Fatalf("cannot create trip: %v", err)
+	}
+
+	got, err := m.GetTrip(c, objid.ToTripID(tr.ID), acct)
+	if err != nil {
+		t.Errorf("cannot get trip: %v", err)
+	}
+
+	if diff := cmp.Diff(tr, got, protocmp.Transform()); diff != "" {
+		t.Errorf("result differs; -want +got: %s", diff)
+	}
+}
+
 func TestGetTrips(t *testing.T) {
 	rows := []struct {
 		id        string
 		accountID string
+		status    rentalpb.TripStatus
 	}{
 		{
 			id:        "5f8132eb10714bf629489051",
 			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_FINISHED,
 		},
 		{
 			id:        "5f8132eb10714bf629489052",
 			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_FINISHED,
+		},
+		{
+			id:        "5f8132eb10714bf629489053",
+			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_FINISHED,
+		},
+		{
+			id:        "5f8132eb10714bf629489054",
+			accountID: "account_id_for_get_trips",
+			status:    rentalpb.TripStatus_IN_PROGRESS,
 		},
 		{
 			id:        "5f8132eb10714bf629489055",
 			accountID: "account_id_for_get_trips_1",
+			status:    rentalpb.TripStatus_IN_PROGRESS,
 		},
 	}
 
 	c := context.Background()
 	mc, err := mongotesting.NewClient(c)
 	if err != nil {
-		t.Errorf("cannot connect mongodb: %v", err)
+		t.Fatalf("cannot connect mongodb: %v", err)
 	}
 
 	m := NewMongo(mc.Database("coolcar"))
@@ -121,49 +185,133 @@ func TestGetTrips(t *testing.T) {
 		mgutil.NewObjIDWithValue(id.TripID(r.id))
 		_, err := m.CreateTrip(c, &rentalpb.Trip{
 			AccountId: r.accountID,
+			Status:    r.status,
 		})
 		if err != nil {
 			t.Fatalf("cannot create rows: %v", err)
 		}
 	}
 
-	type IDList = []id.TripID
 	cases := []struct {
-		name      string
-		accountID string
-		idList    []id.TripID
-		wantCount int
+		name       string
+		accountID  string
+		status     rentalpb.TripStatus
+		wantCount  int
+		wantOnlyID string
 	}{
 		{
 			name:      "get_all",
 			accountID: "account_id_for_get_trips",
-			idList:    IDList{},
-			wantCount: 2,
+			status:    rentalpb.TripStatus_TS_NOT_SPECIFIED,
+			wantCount: 4,
 		},
 		{
-			name:      "get_5f8132eb10714bf629489051",
-			accountID: "account_id_for_get_trips",
-			idList:    IDList{id.TripID("5f8132eb10714bf629489051")},
-			wantCount: 1,
+			name:       "get_in_progress",
+			accountID:  "account_id_for_get_trips",
+			status:     rentalpb.TripStatus_IN_PROGRESS,
+			wantCount:  1,
+			wantOnlyID: "5f8132eb10714bf629489054",
 		},
 	}
 
 	for _, cc := range cases {
 		t.Run(cc.name, func(t *testing.T) {
-			res, err := m.GetTrips(
-				context.Background(),
+			res, err := m.GetTrips(context.Background(),
 				id.AccountID(cc.accountID),
-				cc.idList,
-			)
+				cc.status)
 			if err != nil {
 				t.Errorf("cannot get trips: %v", err)
 			}
+
 			if cc.wantCount != len(res) {
-				t.Errorf("incorrect result count; want:%d, got: %d", len(cc.idList), len(res))
+				t.Errorf("incorrect result count; want: %d, got: %d",
+					cc.wantCount, len(res))
+			}
+
+			if cc.wantOnlyID != "" && len(res) > 0 {
+				if cc.wantOnlyID != res[0].ID.Hex() {
+					t.Errorf("only_id incorrect; want: %q, got %q",
+						cc.wantOnlyID, res[0].ID.Hex())
+				}
 			}
 		})
 	}
 }
+
+// func TestGetTrips(t *testing.T) {
+// 	rows := []struct {
+// 		id        string
+// 		accountID string
+// 	}{
+// 		{
+// 			id:        "5f8132eb10714bf629489051",
+// 			accountID: "account_id_for_get_trips",
+// 		},
+// 		{
+// 			id:        "5f8132eb10714bf629489052",
+// 			accountID: "account_id_for_get_trips",
+// 		},
+// 		{
+// 			id:        "5f8132eb10714bf629489055",
+// 			accountID: "account_id_for_get_trips_1",
+// 		},
+// 	}
+
+// 	c := context.Background()
+// 	mc, err := mongotesting.NewClient(c)
+// 	if err != nil {
+// 		t.Errorf("cannot connect mongodb: %v", err)
+// 	}
+
+// 	m := NewMongo(mc.Database("coolcar"))
+
+// 	for _, r := range rows {
+// 		mgutil.NewObjIDWithValue(id.TripID(r.id))
+// 		_, err := m.CreateTrip(c, &rentalpb.Trip{
+// 			AccountId: r.accountID,
+// 		})
+// 		if err != nil {
+// 			t.Fatalf("cannot create rows: %v", err)
+// 		}
+// 	}
+
+// 	type IDList = []id.TripID
+// 	cases := []struct {
+// 		name      string
+// 		accountID string
+// 		idList    []id.TripID
+// 		wantCount int
+// 	}{
+// 		{
+// 			name:      "get_all",
+// 			accountID: "account_id_for_get_trips",
+// 			idList:    IDList{},
+// 			wantCount: 2,
+// 		},
+// 		{
+// 			name:      "get_5f8132eb10714bf629489051",
+// 			accountID: "account_id_for_get_trips",
+// 			idList:    IDList{id.TripID("5f8132eb10714bf629489051")},
+// 			wantCount: 1,
+// 		},
+// 	}
+
+// 	for _, cc := range cases {
+// 		t.Run(cc.name, func(t *testing.T) {
+// 			res, err := m.GetTrips(
+// 				context.Background(),
+// 				id.AccountID(cc.accountID),
+// 				cc.idList,
+// 			)
+// 			if err != nil {
+// 				t.Errorf("cannot get trips: %v", err)
+// 			}
+// 			if cc.wantCount != len(res) {
+// 				t.Errorf("incorrect result count; want:%d, got: %d", len(cc.idList), len(res))
+// 			}
+// 		})
+// 	}
+// }
 
 func TestUpdateTrip(t *testing.T) {
 	c := context.Background()

@@ -62,7 +62,6 @@ page {
   content: "";
   width: 8rpx;
   height: 40rpx;
-  /* margin: auto; */
   border-radius: 10rpx 0 0 10rpx;
   
   position: relative;

@@ -13,6 +13,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/mozillazg/go-httpheader v0.2.1 // indirect
+	github.com/namsral/flag v1.7.4-pre // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.10 // indirect
 )

@@ -51,6 +51,7 @@ func RunWithMongoInDocker(m *testing.M) int {
 		panic(err)
 	}
 	containerID := res.ID
+	// TODO: 这里好像有点问题？怎么测试之后不会移除容器呢
 	defer func() {
 		err := c.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{
 			Force: true,

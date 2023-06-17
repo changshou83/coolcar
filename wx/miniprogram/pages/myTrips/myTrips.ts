@@ -2,16 +2,25 @@ import { getProfile } from "../../apis/profile";
 import { rental } from "../../apis/proto_gen/rental/rental_pb";
 import { getTrips } from "../../apis/trip";
 import { defaultAvatar } from "../../constants/index";
-import { getUserInfo, routing, setUserInfo } from "../../utils/index";
+import {
+  formatDate,
+  formatDuration,
+  formatFee,
+  getUserInfo,
+  routing,
+  setUserInfo,
+} from "../../utils/index";
 
 interface Trip {
   id: string;
+  date: string;
   start: string;
   end: string;
   duration: string;
   fee: string;
   distance: string;
   status: string;
+  inProgress: boolean;
 }
 // 视图列表元素
 interface DayItem {
@@ -43,10 +52,10 @@ interface ScrollState {
   dayItemID: string;
 }
 
-// const tripStatusMap = new Map([
-//   [rental.v1.TripStatus.IN_PROGRESS, "进行中"],
-//   [rental.v1.TripStatus.FINISHED, "已完成"],
-// ]);
+const tripStatusMap = new Map([
+  [rental.v1.TripStatus.IN_PROGRESS, "进行中"],
+  [rental.v1.TripStatus.FINISHED, "已完成"],
+]);
 
 const IdentityStatus = rental.v1.IdentityStatus;
 const licStatusMap = new Map([
@@ -68,14 +77,13 @@ Page({
     days: [] as DayItem[],
     selectedDay: "",
     dayListScrollTop: 0,
+    haveTrips: false,
   },
   /* 生命周期函数 */
   async onLoad() {
     // 获取头像
     const { avatarURL = defaultAvatar } = getUserInfo();
-    this.setData({
-      avatarURL,
-    });
+    this.setData({ avatarURL });
   },
   async onShow() {
     const { status } = await getProfile();
@@ -84,17 +92,16 @@ Page({
     });
   },
   async onReady() {
-    await getTrips();
-    // const { trips } = await getTrips();
-    this.populateTrips();
+    const { trips } = await getTrips();
+    if (trips && trips.length > 0) {
+      this.setData({ haveTrips: true });
+      this.populateTrips(trips);
+    }
   },
   /* 页面方法 */
   gotoRegister() {
     const url = routing.register();
-    console.log(url);
-    wx.navigateTo({
-      url,
-    });
+    wx.navigateTo({ url });
   },
   gotoDriving(evt: any) {
     if (!evt.currentTarget.dataset.tripInProgress) {
@@ -153,34 +160,55 @@ Page({
         this.dayListState = dayList;
       });
   },
-  populateTrips() {
+  populateTrips(list: rental.v1.ITripEntity[]) {
     const days: DayItem[] = [];
     const trips: TripItem[] = [];
     let selectedDay;
-    // let prevTripDate;
-    for (let i = 0; i < 100; i++) {
+    let prevTripDate: string;
+    list.forEach((trip, i) => {
       const dayItemID = "day-item-" + i;
       const tripItemID = "trip-item-" + i;
+      const date = formatDate(trip.trip?.start?.timestampSec! * 1000).slice(6);
 
       const tripData: Trip = {
-        id: (10001 + i).toString(),
-        start: "东方明珠",
-        end: "迪士尼",
-        distance: "27.0",
-        duration: "0时44分",
-        fee: "128",
-        status: "已完成",
+        id: trip.id!,
+        date: date,
+        start: trip.trip?.start?.locDesc || "未知",
+        end: "",
+        distance: "",
+        duration: "",
+        fee: "",
+        status: tripStatusMap.get(trip.trip?.status!) || "未知",
+        inProgress: trip.trip?.status === rental.v1.TripStatus.IN_PROGRESS,
       };
+      const end = trip.trip?.end;
+      if (end) {
+        tripData.end = end.locDesc || "未知";
+        tripData.distance = end.kmDriven?.toFixed(1) + "公里";
+        tripData.fee = formatFee(end.feeCent || 0);
+        const dur = formatDuration(
+          (end.timestampSec || 0) - (trip.trip?.start?.timestampSec || 0)
+        );
+        tripData.duration = `${dur.hh}时${dur.mm}分${dur.ss}秒`;
+      }
 
-      // TODO:如果他们是同一天的，就不推新的day，并且新的trip的dayItemID与上一个相同
-      // if(prevTripDate == currentTripDate) {}
-      trips.push({ dayItemID, id: tripItemID, data: tripData });
-      days.push({ tripItemID, id: dayItemID, label: (10001 + i).toString() });
+      // 如果他们是同一天的，就不推新的day，并且新的trip的dayItemID与上一个相同
+      if (prevTripDate == date) {
+        trips.push({
+          dayItemID: trips[i - 1].dayItemID,
+          id: tripItemID,
+          data: tripData,
+        });
+      } else {
+        trips.push({ dayItemID, id: tripItemID, data: tripData });
+        days.push({ tripItemID, id: dayItemID, label: date });
+      }
 
+      prevTripDate = date;
       if (i === 0) {
         selectedDay = dayItemID;
       }
-    }
+    });
     this.setData({ trips, days, selectedDay }, this.setupListState);
   },
   updateScrollState(state: ScrollState) {

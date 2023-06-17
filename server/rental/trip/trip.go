@@ -73,13 +73,9 @@ func (s *Service) CreateTrip(
 	}
 
 	// 创建行程：写入数据库，开始计费
-	locDesc, err := s.LocDescManager.Resolve(ctx, req.Start)
-	if err != nil {
-		s.Logger.Info("cannot resolve loc_desc", zap.Stringer("loc", req.Start))
-	}
 	ls := s.calcCurrentStatus(ctx, &rentalpb.LocationStatus{
-		Location: req.Start,
-		LocDesc:  locDesc,
+		Location:     req.Start,
+		TimestampSec: nowFunc(),
 	}, req.Start)
 	trip, err := s.Mongo.CreateTrip(ctx, &rentalpb.Trip{
 		AccountId:  accountID.String(),
@@ -106,6 +102,20 @@ func (s *Service) CreateTrip(
 		Id:   trip.ID.Hex(),
 		Trip: trip.Trip,
 	}, nil
+}
+
+// GetTrip gets a trip.
+func (s *Service) GetTrip(c context.Context, req *rentalpb.GetTripRequest) (*rentalpb.Trip, error) {
+	aid, err := auth.AccountIDFromContext(c)
+	if err != nil {
+		return nil, err
+	}
+
+	tr, err := s.Mongo.GetTrip(c, id.TripID(req.Id), aid)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "")
+	}
+	return tr.Trip, nil
 }
 
 func (s *Service) GetTrips(
@@ -189,7 +199,6 @@ var nowFunc = func() int64 {
 }
 
 const centsPerSec = 0.7
-const kmPerSec = 0.02
 
 func (s *Service) calcCurrentStatus(
 	c context.Context,
@@ -199,21 +208,19 @@ func (s *Service) calcCurrentStatus(
 	now := nowFunc()
 	elapsedSec := float64(now - prev.TimestampSec)
 
-	// dist, err := s.DistanceCalc.DistanceKm(c, prev.Location, cur)
-	// if err != nil {
-	// 	s.Logger.Warn("cannot calculate distance", zap.Error(err))
-	// }
+	dist, err := s.DistanceCalc.DistanceKm(c, prev.Location, cur)
+	if err != nil {
+		s.Logger.Warn("cannot calculate distance", zap.Error(err))
+	}
 
 	locDesc, err := s.LocDescManager.Resolve(c, cur)
 	if err != nil {
-		s.Logger.Info("cannot resolve loc_desc", zap.Error(err))
+		s.Logger.Info("cannot resolve loc_desc", zap.Stringer("loc_desc", cur))
 	}
-
 	return &rentalpb.LocationStatus{
-		Location: cur,
-		FeeCent:  prev.FeeCent + int32(centsPerSec*elapsedSec),
-		// KmDriven:     prev.KmDriven + dist,
-		KmDriven:     prev.KmDriven + kmPerSec*elapsedSec,
+		Location:     cur,
+		FeeCent:      prev.FeeCent + int32(centsPerSec*elapsedSec),
+		KmDriven:     prev.KmDriven + dist,
 		TimestampSec: now,
 		LocDesc:      locDesc,
 	}

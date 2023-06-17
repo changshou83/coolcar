@@ -1,6 +1,7 @@
+import { subscribe } from "../../apis/car";
 import { getProfile } from "../../apis/profile";
-import { rental } from "../../apis/proto_gen/rental/rental_pb";
 import { getTrips } from "../../apis/trip";
+import { rental } from "../../apis/proto_gen/rental/rental_pb";
 import { ModalResult } from "../../types/index";
 import { getUserInfo, routing } from "../../utils/index";
 
@@ -13,7 +14,7 @@ interface Marker {
   height: number;
 }
 
-// const defaultCarImg = "/resources/car.png";
+const defaultCarImg = "/resources/car.png";
 const initialLat = 42.05297;
 const initialLng = 123.52658;
 
@@ -49,12 +50,12 @@ Page({
   },
   /* 生命周期 */
   onShow() {
-    const { avatarURL } = getUserInfo();
+    const { avatarURL = "" } = getUserInfo();
     const markers = this.socket ? this.data.markers : [];
 
     this.isFrontDesk = true;
     this.setData({ markers, avatarURL }, () => {
-      this.socket && this.setupCarPosUpdater();
+      !this.socket && this.setupCarPosUpdater();
     });
   },
   onHide() {
@@ -77,6 +78,7 @@ Page({
     wx.getLocation({
       type: "gcj02", // 返回可用于 wx.openLocation 的坐标
       success: (res) => {
+        console.log({ res });
         this.setData({
           location: {
             latitude: res.latitude,
@@ -100,7 +102,10 @@ Page({
       trips?.filter(
         (t) => t.trip?.status === rental.v1.TripStatus.IN_PROGRESS
       ) || [];
-    if (inProgressTrips.length > 0) {
+    // const { trips: inProgressTrips = [] } = await getTrips(
+    //   rental.v1.TripStatus.IN_PROGRESS
+    // );
+    if (inProgressTrips && inProgressTrips.length > 0) {
       await this.selectComponent("#tripModal").showModal();
       wx.navigateTo({
         url: routing.driving({
@@ -112,6 +117,7 @@ Page({
 
     wx.scanCode({
       success: async () => {
+        console.log("扫码租车-成功后");
         // TODO: get car id from scan result.
         const car_id = "car123";
         const redirectURL = routing.lock({ car_id });
@@ -133,67 +139,72 @@ Page({
   /* 辅助方法 */
   setupCarPosUpdater() {
     // get map context
-    // const mapCtx = wx.createMapContext("map");
-    // const markers = new Map<string, Marker>();
+    const mapCtx = wx.createMapContext("map");
+    const markersByCarID = new Map<string, Marker>();
     // lock
-    // let translating = false;
-    // const endTranslation = () => translating = false;
-    // const updateMarker = (fn: () => void) => {
-    //   translating = true;
-    //   fn()
-    // }
+    let translating = false;
+    const endTranslation = () => (translating = false);
+    const updateMarker = (fn: () => void) => {
+      translating = true;
+      fn();
+    };
     // get/create marker -> move marker
-    // TODO: CarService
-    // this.socket = CarService.subscribe(({ id, car }) => {
-    //   if (!id || translating || !this.isFrontDesk) {
-    //     console.log("dropped");
-    //     return
-    //   }
-    //   const { driver, position } = car;
-    //   const newIcon = driver.avatarUrl || defaultCarImg;
-    //   const newLat = position.latitude || initialLat;
-    //   const newLng = position.longitude || initialLng;
-    //   const marker = markers.get(id);
-    //   // create new marker
-    //   if(!marker) {
-    //     const { markers: _markers } = this.data;
-    //     const newMarker: Marker = {
-    //       id: _markers.length,
-    //       iconPath: newIcon,
-    //       latitude: newLat,
-    //       longitude: newLng,
-    //       height: 20,
-    //       width: 20
-    //     };
-    //     // insert new marker
-    //     markers.set(id, newMarker);
-    //     _markers.push(newMarker);
-    //     // update view
-    //     updateMarker(() => this.setData({ markers: this.data.markers }, endTranslation))
-    //     return
-    //   }
-    //   // Change Icon
-    //   if (marker.iconPath !== newIcon) {
-    //     marker.iconPath = newIcon;
-    //     marker.latitude = newLat;
-    //     marker.longitude = newLng;
-    //     updateMarker(() => this.setData({ markers: this.data.markers }, endTranslation))
-    //     return
-    //   }
-    //   // Move Marker
-    //   if (marker.latitude !== newLat || marker.longitude !== newLng) {
-    //     updateMarker(() => mapCtx.translateMarker({
-    //       markerId: marker.id,
-    //       destination: {
-    //         latitude: newLat,
-    //         longitude: newLng,
-    //       },
-    //       autoRotate: false,
-    //       rotate: 0,
-    //       duration: 80,
-    //       animationEnd: endTranslation,
-    //     }))
-    //   }
-    // })
+    this.socket = subscribe(({ id, car }) => {
+      if (!id || translating || !this.isFrontDesk) {
+        console.log("dropped");
+        return;
+      }
+      const { driver, position } = car!;
+      const newIcon = driver!.avatarUrl || defaultCarImg;
+      const newLat = position!.latitude || initialLat;
+      const newLng = position!.longitude || initialLng;
+      const marker = markersByCarID.get(id);
+      // create new marker
+      if (!marker) {
+        const { markers: _markers } = this.data;
+        const newMarker: Marker = {
+          id: _markers.length,
+          iconPath: newIcon,
+          latitude: newLat,
+          longitude: newLng,
+          height: 20,
+          width: 20,
+        };
+        // insert new marker
+        markersByCarID.set(id, newMarker);
+        _markers.push(newMarker);
+        // update view
+        updateMarker(() =>
+          this.setData({ markers: this.data.markers }, endTranslation)
+        );
+        return;
+      }
+      // Change Icon
+      if (marker.iconPath !== newIcon) {
+        marker.iconPath = newIcon;
+        marker.latitude = newLat;
+        marker.longitude = newLng;
+        updateMarker(() =>
+          this.setData({ markers: this.data.markers }, endTranslation)
+        );
+        return;
+      }
+      // Move Marker
+      if (marker.latitude !== newLat || marker.longitude !== newLng) {
+        updateMarker(() =>
+          mapCtx.translateMarker({
+            markerId: marker.id,
+            destination: {
+              latitude: newLat,
+              longitude: newLng,
+            },
+            autoRotate: false,
+            rotate: 0,
+            duration: 80,
+            animationEnd: endTranslation,
+          })
+        );
+      }
+    });
   },
 });

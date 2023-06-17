@@ -8,7 +8,7 @@ export async function login() {
   }
   const { code } = await wxLogin();
   const reqTimeMs = Date.now();
-  const { assessToken, expiresIn } = await request<
+  const { accessToken, expiresIn } = await request<
     auth.v1.ILoginRequest,
     auth.v1.ILoginResponse
   >(
@@ -23,8 +23,9 @@ export async function login() {
       retryOnAuthError: false,
     }
   );
+  wx.showToast({ title: "登录成功", icon: "success", mask: false });
   setAuthData({
-    token: assessToken!,
+    token: accessToken!,
     expiryMs: reqTimeMs + expiresIn! * 1000,
   });
 }

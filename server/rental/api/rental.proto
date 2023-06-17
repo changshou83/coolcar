@@ -13,8 +13,15 @@ message CreateTripRequest {
   string avatar_url = 3;
 }
 
+message GetTripRequest {
+  string id = 1;
+}
+
+// message GetTripsRequest {
+//   TripStatus status = 1;
+// }
 message GetTripsRequest {
-  repeated string id_list = 1;
+  repeated string idList = 1;
 }
 
 message GetTripsResponse {
@@ -29,6 +36,7 @@ message UpdateTripRequest {
 
 service TripService {
   rpc CreateTrip(CreateTripRequest) returns (TripEntity);
+  rpc GetTrip(GetTripRequest) returns (Trip);
   rpc GetTrips(GetTripsRequest) returns (GetTripsResponse);
   rpc UpdateTrip(UpdateTripRequest) returns (Trip);
 }

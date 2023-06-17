@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	authpb "coolcar/auth/api/gen/v1"
+	carpb "coolcar/car/api/gen/v1"
 	rentalpb "coolcar/rental/api/gen/v1"
 	"coolcar/shared/server"
-	"flag"
 	"log"
 	"net/http"
+
+	"github.com/namsral/flag"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -19,8 +21,7 @@ var addr = flag.String("addr", ":8080", "address to listen")
 var authAddr = flag.String("auth_addr", "localhost:8081", "address for auth service")
 var tripAddr = flag.String("trip_addr", "localhost:8082", "address for trip service")
 var profileAddr = flag.String("profile_addr", "localhost:8082", "address for profile service")
-
-// var carAddr = flag.String("car_addr", "localhost:8084", "address for car service")
+var carAddr = flag.String("car_addr", "localhost:8084", "address for car service")
 
 func main() {
 	flag.Parse()
@@ -62,6 +63,11 @@ func main() {
 			name:         "profile",
 			addr:         *profileAddr,
 			registerFunc: rentalpb.RegisterProfileServiceHandlerFromEndpoint,
+		},
+		{
+			name:         "car",
+			addr:         *carAddr,
+			registerFunc: carpb.RegisterCarServiceHandlerFromEndpoint,
 		},
 	}
 

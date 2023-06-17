@@ -32,6 +32,7 @@ func (s *Service) CreateBlob(c context.Context, req *blobpb.CreateBlobRequest) (
 	aid := id.AccountID(req.AccountId)
 	record, err := s.Mongo.CreateBlob(c, aid)
 	if err != nil {
+		s.Logger.Error("cannot create blob", zap.Error(err))
 		return nil, status.Error(codes.Internal, "")
 	}
 

@@ -17,6 +17,7 @@ import (
 const (
 	tripField      = "trip"
 	accountIDField = tripField + ".accountid"
+	statusField    = tripField + ".status"
 )
 
 // Mongo defines a mongo dao.
@@ -56,6 +57,58 @@ func (m *Mongo) CreateTrip(
 
 	return record, nil
 }
+
+// GetTrip gets a trip.
+func (m *Mongo) GetTrip(c context.Context, id id.TripID, accountID id.AccountID) (*TripRecord, error) {
+	objID, err := objid.FromID(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid id: %v", err)
+	}
+	res := m.collection.FindOne(c, bson.M{
+		mgutil.IDFieldName: objID,
+		accountIDField:     accountID,
+	})
+
+	if err := res.Err(); err != nil {
+		return nil, err
+	}
+
+	var tr TripRecord
+	err = res.Decode(&tr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode: %v", err)
+	}
+	return &tr, nil
+}
+
+// GetTrips gets trips for the account by status.
+// If status is not specified, gets all trips for the account.
+// func (m *Mongo) GetTrips(c context.Context, accountID id.AccountID, status rentalpb.TripStatus) ([]*TripRecord, error) {
+// 	filter := bson.M{
+// 		accountIDField: accountID.String(),
+// 	}
+// 	if status != rentalpb.TripStatus_TS_NOT_SPECIFIED {
+// 		filter[statusField] = status
+// 	}
+
+// 	res, err := m.collection.Find(c, filter, options.Find().SetSort(bson.M{
+// 		mgutil.IDFieldName: -1,
+// 	}))
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	var trips []*TripRecord
+// 	for res.Next(c) {
+// 		var trip TripRecord
+// 		err := res.Decode(&trip)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		trips = append(trips, &trip)
+// 	}
+// 	return trips, nil
+// }
 
 // GetTrips gets trips for the account by id list,
 // If id list is empty, gets all trips for the account.

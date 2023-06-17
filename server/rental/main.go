@@ -4,6 +4,7 @@ import (
 	"context"
 	blobpb "coolcar/blob/api/gen/v1"
 	carpb "coolcar/car/api/gen/v1"
+	"coolcar/rental/ai"
 	rentalpb "coolcar/rental/api/gen/v1"
 	"coolcar/rental/profile"
 	profiledao "coolcar/rental/profile/dao"
@@ -12,10 +13,12 @@ import (
 	locdesc "coolcar/rental/trip/client/locDesc"
 	profileClient "coolcar/rental/trip/client/profile"
 	tripdao "coolcar/rental/trip/dao"
+	coolenvpb "coolcar/shared/coolenv"
 	"coolcar/shared/server"
-	"flag"
 	"log"
 	"time"
+
+	"github.com/namsral/flag"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -27,8 +30,7 @@ var addr = flag.String("addr", ":8082", "address to listen")
 var mongoURI = flag.String("mongo_uri", "mongodb://localhost:27017", "mongo uri")
 var blobAddr = flag.String("blob_addr", "localhost:8083", "address for blob service")
 var carAddr = flag.String("car_addr", "localhost:8084", "address for car service")
-
-// var aiAddr = flag.String("ai_addr", "localhost:18001", "address for ai service")
+var aiAddr = flag.String("ai_addr", "localhost:18001", "address for ai service")
 var authPublicKeyFile = flag.String("auth_public_key_file", "shared/public.key", "public key file for auth")
 
 func main() {
@@ -52,10 +54,20 @@ func main() {
 		logger.Fatal("cannot connect blob service", zap.Error(err))
 	}
 
+	ac, err := grpc.Dial(*aiAddr, grpc.WithInsecure())
+	if err != nil {
+		logger.Fatal("cannot connect ai service", zap.Error(err))
+	}
+	aiClient := &ai.Client{
+		AIClient:  coolenvpb.NewAIServiceClient(ac),
+		UseRealAI: false,
+	}
+
 	profService := &profile.Service{
 		BlobClient:        blobpb.NewBlobServiceClient(blobConn),
 		PhotoGetExpire:    5 * time.Second,
 		PhotoUploadExpire: 10 * time.Second,
+		IdentityResolver:  aiClient,
 
 		Mongo:  profiledao.NewMongo(db),
 		Logger: logger,
@@ -81,6 +93,7 @@ func main() {
 				CarManager: &car.Manager{
 					CarService: carpb.NewCarServiceClient(carConn),
 				},
+				DistanceCalc: aiClient,
 				ProfileManager: &profileClient.Manager{
 					Fetcher: profService,
 				},

@@ -8,11 +8,12 @@ import (
 	"coolcar/auth/token"
 	"coolcar/auth/wechat"
 	"coolcar/shared/server"
-	"flag"
 	"io"
 	"log"
 	"os"
 	"time"
+
+	"github.com/namsral/flag"
 
 	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -25,8 +26,8 @@ var (
 	addr            = flag.String("addr", ":8081", "address to listen")
 	mongoURI        = flag.String("mongo_uri", "mongodb://localhost:27017", "mongo uri")
 	privateKeyFile  = flag.String("private_key_file", "auth/private.key", "rsa private key file")
-	wechatAppID     = flag.String("wechat_app_id", "wx779670c13fa0c873", "wechat app id")
-	wechatAppSecret = flag.String("wechat_app_secret", "eec6b69ae027cb45c64a15598501ad19", "wechat app secret")
+	wechatAppID     = flag.String("wechat_app_id", "", "wechat app id")
+	wechatAppSecret = flag.String("wechat_app_secret", "", "wechat app secret")
 )
 
 func main() {
@@ -40,7 +41,7 @@ func main() {
 	c := context.Background()
 	mc, err := mongo.Connect(c, options.Client().ApplyURI(*mongoURI))
 	if err != nil {
-		logger.Fatal("cannot connect mongodb: %v", zap.Error(err))
+		logger.Fatal("cannot connect mongodb", zap.Error(err))
 	}
 	// 从private.key读取private key
 	pkFile, err := os.Open(*privateKeyFile)

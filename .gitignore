@@ -131,7 +131,13 @@ dist
 
 # mini-program
 wx/miniprogram/**/*.js
-!wx/miniprogram/apis/proto_gen/**/*.js
+# !wx/miniprogram/apis/proto_gen/**/*.js
 wx/miniprogram/miniprogram_npm
+project.private.config.json
 
+## 私钥文件
 private.key
+
+# 生成代码
+wx/miniprogram/apis/proto_gen
+server/**/api/gen/**

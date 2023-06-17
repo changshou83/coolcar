@@ -15,12 +15,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// type IdentityResolver interface {
-// 	Resolve(c context.Context, photo []byte) (*rentalpb.Identity, error)
-// }
+type IdentityResolver interface {
+	Resolve(c context.Context, photo []byte) (*rentalpb.Identity, error)
+}
 
 type Service struct {
-	// IdentityResolver  IdentityResolver
+	IdentityResolver  IdentityResolver
 	BlobClient        blobpb.BlobServiceClient
 	PhotoGetExpire    time.Duration
 	PhotoUploadExpire time.Duration

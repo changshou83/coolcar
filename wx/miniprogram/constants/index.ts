@@ -3,3 +3,4 @@ export const defaultAvatar =
 export const UserInfoKey = "user_info";
 export const AuthDataKey = "auth_data";
 export const baseURL = "http://localhost:8080";
+export const wsURL = "ws://localhost:9090";

@@ -7,8 +7,9 @@ import (
 	"coolcar/blob/cos"
 	"coolcar/blob/dao"
 	"coolcar/shared/server"
-	"flag"
 	"log"
+
+	"github.com/namsral/flag"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,9 +23,9 @@ var mongoURI = flag.String("mongo_uri", "mongodb://localhost:27017", "mongo uri"
 // var cosAddr = flag.String("cos_addr", "<URL>", "cos address")
 // var cosSecID = flag.String("cos_sec_id", "<SEC_ID>", "cos secret id")
 // var cosSecKey = flag.String("cos_sec_key", "<SEC_KEY>", "cos secret key")
-var cosAddr = flag.String("cos_addr", "https://coolcar-1304312343.cos.ap-beijing.myqcloud.com", "cos address")
-var cosSecID = flag.String("cos_sec_id", "AKIDoRp1zjGblgMo0tY0GI5csufKq8Wt41oR", "cos secret id")
-var cosSecKey = flag.String("cos_sec_key", "Xq33qNfjaFpQr53qX6QVKsAByWoqlQr5", "cos secret key")
+var cosAddr = flag.String("cos_addr", "", "cos address")
+var cosSecID = flag.String("cos_sec_id", "", "cos secret id")
+var cosSecKey = flag.String("cos_sec_key", "", "cos secret key")
 
 func main() {
 	flag.Parse()

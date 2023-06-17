@@ -1,3 +1,5 @@
+import { getCar } from "../../apis/car";
+import { car } from "../../apis/proto_gen/car/car_pb";
 import { createTrip } from "../../apis/trip";
 import { defaultAvatar } from "../../constants/index";
 import { getUserInfo, routing, setUserInfo } from "../../utils/index";
@@ -14,9 +16,11 @@ Page({
     enableShareLoc: false,
   },
   /* 生命周期函数 */
-  async onLoad(opts: Record<"car_id", string>) {
-    const { car_id }: routing.LockOpts = opts;
-    this.carID = car_id;
+  async onLoad() {
+    // async onLoad(opts: Record<"car_id", string>) {
+    // const { car_id }: routing.LockOpts = opts;
+    // this.carID = car_id;
+    this.carID = "645ae792ffdf429ae3b1439c";
 
     const { avatarURL } = getUserInfo();
     this.setData({
@@ -42,6 +46,7 @@ Page({
           console.error("no car id specified");
           return;
         }
+        // create trip
         const { id } = await createTrip({
           start: {
             latitude: loc.latitude,
@@ -50,17 +55,18 @@ Page({
           carId: this.carID,
           avatarUrl: this.data.avatarUrl,
         });
+        // show toast
         wx.showToast({
           title: "开锁中...",
           mask: true,
         });
+        // create car refresher
         this.carRefresher = setInterval(async () => {
-          const state = "UNLOCKED";
-          const trip_id = id;
-          if (state === "UNLOCKED") {
+          const c = await getCar(this.carID);
+          if (c.status === car.v1.CarStatus.UNLOCKED) {
             this.clearCarRefresher();
             wx.redirectTo({
-              url: routing.driving({ trip_id }),
+              url: routing.driving({ trip_id: id }),
               complete() {
                 wx.hideLoading();
               },

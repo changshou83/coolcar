@@ -12,6 +12,24 @@ export function createTrip(
   });
 }
 
+// export async function getTrip(id: string): Promise<rental.v1.ITrip> {
+//   return requestWithRetry({
+//     method: "GET",
+//     url: `/v1/trip/${encodeURIComponent(id)}`,
+//     resolveRes: rental.v1.Trip.fromObject,
+//   });
+// }
+
+// export function getTrips(
+//   status?: rental.v1.TripStatus
+// ): Promise<rental.v1.IGetTripsResponse> {
+//   return requestWithRetry({
+//     method: "GET",
+//     url: `/v1/trips${status ? "?status=" + status : ""}`,
+//     resolveRes: rental.v1.GetTripsResponse.fromObject,
+//   });
+// }
+
 export async function getTrip(id: string): Promise<rental.v1.ITrip> {
   const { trips } = await getTrips([id]);
   return trips !== undefined && trips !== null

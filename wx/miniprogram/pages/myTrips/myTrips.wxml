@@ -18,7 +18,8 @@
 </view>
 <!-- 列表展示 -->
 <view class="flex">
-  <!-- 左侧日期列 -->
+  <block wx:if="{{haveTrips}}">
+    <!-- 左侧日期列 -->
   <scroll-view
     style="height: calc(100vh - 178rpx)"
     class="bg-white left-nav"
@@ -63,7 +64,7 @@
       <view class="cu-bar solid-bottom padding-right">
         <view class="action">
           <text class="cuIcon-title text-green" />
-          <text>{{tripItem.data.id}}</text>
+          <text>{{tripItem.data.date}}</text>
         </view>
         <view
           class="{{tripItem.data.inProgress ? 'text-blue in-progress text-lg text-bold' : ''}}"
@@ -100,4 +101,8 @@
       </view>
     </view>
   </scroll-view>
+  </block>
+  <view wx:else style="width:89%;height: calc(100vh - 178rpx)" class="text-xl heading-title text-grey flex justify-center align-center">
+    暂无行程
+  </view>
 </view>
